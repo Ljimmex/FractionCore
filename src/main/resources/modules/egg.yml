@@ -1,0 +1,20 @@
+# FractionCore v2.0 - Egg module configuration
+schema-version: 1
+enabled: true
+
+lives:
+  max: 3
+  collapse-delay-minutes: 60
+  rebuild-timer-hours: 24
+
+shield:
+  enabled: true
+  duration-minutes: 30
+
+stages:
+  healthy:
+    material: DRAGON_EGG
+  damaged:
+    material: CRACKED_STONE_BRICKS
+  critical:
+    material: BEDROCK

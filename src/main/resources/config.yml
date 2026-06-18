@@ -1,0 +1,67 @@
+# FractionCore v2.0 - Main Configuration
+
+# General settings
+general:
+  version: 1
+  language: pl_PL
+  debug: false
+  prefix: "<dark_gray>[<aqua>FGC<dark_gray>] <gray>"
+
+# Language settings
+lang:
+  default: pl_PL
+
+# Database configuration
+database:
+  type: SQLITE # SQLITE, MYSQL, POSTGRESQL
+  sqlite:
+    file: "data/database.db"
+  mysql:
+    host: localhost
+    port: 3306
+    database: fractioncore
+    username: root
+    password: ""
+  postgresql:
+    host: localhost
+    port: 5432
+    database: fractioncore
+    username: postgres
+    password: ""
+  pool:
+    max-size: 10
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1800000
+
+# Module configuration
+# Set enabled: false to disable a module on startup.
+modules:
+  guild:
+    enabled: true
+  cuboid:
+    enabled: true
+  egg:
+    enabled: true
+  economy:
+    enabled: true
+  ranking:
+    enabled: true
+  gui:
+    enabled: true
+  tab:
+    enabled: true
+  map:
+    enabled: true
+  villagers:
+    enabled: false
+  join_items:
+    enabled: false
+  lang:
+    enabled: true
+  database:
+    enabled: true
+  backup:
+    enabled: true
+  webhook:
+    enabled: false

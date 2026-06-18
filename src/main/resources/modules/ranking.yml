@@ -1,0 +1,18 @@
+# FractionCore v2.0 - Ranking module configuration
+schema-version: 1
+enabled: true
+
+formula:
+  kill: 10
+  death: -5
+  assist: 3
+  egg-destroy: 50
+  egg-damage: 15
+  cuboid-level-multiplier: 1.0
+
+season:
+  enabled: false
+  length-days: 90
+
+rewards:
+  enabled: false

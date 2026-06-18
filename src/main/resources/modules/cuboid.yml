@@ -1,0 +1,27 @@
+# FractionCore v2.0 - Cuboid module configuration
+schema-version: 1
+enabled: true
+
+levels:
+  '1':
+    radius: 16
+    max-members: 5
+    upgrade-cost: []
+  '2':
+    radius: 25
+    max-members: 8
+    upgrade-cost: []
+
+flags:
+  build:
+    members: true
+    allies: false
+    others: false
+  destroy:
+    members: true
+    allies: false
+    others: false
+  pvp:
+    members: true
+    allies: true
+    others: false

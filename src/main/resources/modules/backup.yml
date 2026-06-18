@@ -1,0 +1,6 @@
+# FractionCore v2.0 - Backup module configuration
+schema-version: 1
+enabled: true
+
+interval-hours: 24
+keep-count: 7

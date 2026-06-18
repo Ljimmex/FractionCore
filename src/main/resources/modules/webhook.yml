@@ -1,0 +1,9 @@
+# FractionCore v2.0 - Webhook module configuration
+schema-version: 1
+enabled: false
+
+url: ""
+events:
+  guild-create: false
+  guild-disband: false
+  egg-destroy: false

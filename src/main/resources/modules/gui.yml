@@ -1,0 +1,12 @@
+# FractionCore v2.0 - GUI module configuration
+schema-version: 1
+enabled: true
+
+main-menu:
+  title: "&8[&c%guild_tag%&8] &7Menu Gildii"
+  size: 54
+
+sounds:
+  open: "BLOCK_NOTE_BLOCK_PLING"
+  click: "BLOCK_NOTE_BLOCK_HAT"
+  close: "BLOCK_NOTE_BLOCK_BASS"

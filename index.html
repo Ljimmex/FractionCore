@@ -1,0 +1,2663 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FGC v2.0 // TECH PORTAL</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.004 240);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(15% 0.02 100);
+      --muted:   oklch(40% 0.02 100);
+      --border:  oklch(15% 0.02 100);
+      --accent:  oklch(60% 0.22 25);
+
+      --font-display: 'Times New Roman', 'Iowan Old Style', Georgia, serif;
+      --font-body:    ui-monospace, 'IBM Plex Mono', 'JetBrains Mono', Menlo, monospace;
+
+      --bw: 2px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      margin: 0;
+      padding: 0;
+      line-height: 1.4;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .page-container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      border-right: var(--bw) solid var(--border);
+      padding: 2rem;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .logo-area h1 {
+      font-size: 2.6rem;
+      line-height: 0.9;
+      letter-spacing: -2px;
+      border-bottom: var(--bw) solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .logo-area .subtitle {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: var(--bw) solid transparent;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      transition: all 0.1s ease;
+    }
+
+    .nav-item:hover {
+      border-color: var(--border);
+      background: var(--bg);
+    }
+
+    .nav-item.active {
+      background: var(--border);
+      color: var(--surface);
+      border-color: var(--border);
+      box-shadow: 4px 4px 0px var(--accent);
+    }
+
+    .main-view {
+      padding: 3rem;
+      position: relative;
+    }
+
+    .view-section {
+      display: none;
+      animation: fade-in 0.2s ease-out;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .sprint-block {
+      border: var(--bw) solid var(--border);
+      background: var(--surface);
+      box-shadow: 10px 10px 0px var(--border);
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 4rem;
+    }
+
+    .sprint-header {
+      background: var(--border);
+      color: var(--surface);
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .sprint-header h2 { font-size: 1.4rem; }
+
+    .sprint-checkbox {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--surface);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .sprint-checkbox:checked { background: var(--accent); }
+    .sprint-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--surface);
+      font-weight: bold;
+    }
+
+    .sprint-directives {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: var(--bw) solid var(--border);
+      background: var(--bg);
+    }
+
+    .directive-panel { padding: 1.5rem; border-right: var(--bw) solid var(--border); }
+    .directive-panel:last-child { border-right: none; }
+    .directive-panel h3 { font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .directive-panel h3::before { content: '→'; color: var(--accent); }
+    .directive-content { font-size: 0.85rem; }
+    .dod-list { list-style: none; padding: 0; margin: 0; }
+    .dod-item { display: flex; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; }
+    .dod-item::before { content: '☐'; font-weight: bold; }
+
+    .sprint-content { padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+    .task-card { border: var(--bw) solid var(--border); background: var(--surface); display: flex; flex-direction: column; }
+    .task-main { padding: 1rem 1.5rem; background: var(--bg); border-bottom: var(--bw) solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .task-main-left { display: flex; align-items: center; gap: 1rem; }
+    .task-num { font-weight: bold; font-size: 1.2rem; background: var(--border); color: var(--surface); padding: 2px 8px; }
+    .task-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: bold; }
+    .task-tag { font-size: 0.7rem; border: 1px solid var(--border); padding: 2px 6px; text-transform: uppercase; }
+
+    .subtask-row {
+      display: grid;
+      grid-template-columns: 80px 100px 1fr 100px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .subtask-row:last-child { border-bottom: none; }
+    .subtask-cell { padding: 0.75rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; align-items: center; }
+    .subtask-cell:last-child { border-right: none; }
+    .cell-id { font-weight: bold; color: var(--muted); }
+    .cell-time { font-weight: bold; color: var(--accent); justify-content: center; }
+    .status-check { justify-content: center; font-weight: bold; }
+
+    .completed { opacity: 0.4; filter: grayscale(1); text-decoration: line-through; }
+    .sprint-completed { opacity: 0.6; filter: grayscale(1); }
+
+    .roadmap-summary {
+      border: var(--bw) solid var(--border);
+      background: var(--border);
+      color: var(--surface);
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .summary-stat .label { font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .summary-stat .value { font-family: var(--font-display); font-size: 2.5rem; font-weight: bold; }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+
+    .doc-section {
+      border: var(--bw) solid var(--border);
+      padding: 2rem;
+      background: var(--surface);
+      box-shadow: 6px 6px 0px var(--border);
+    }
+
+    .doc-section h2 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      border-bottom: var(--bw) solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .doc-section p { font-size: 0.9rem; margin: 0 0 1rem 0; }
+    .doc-section ul { font-size: 0.85rem; margin: 0 0 1rem 0; padding-left: 1.5rem; }
+    .doc-section li { margin-bottom: 0.35rem; }
+    .doc-section code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1px 4px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+    }
+
+    .arch-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+
+    .arch-node {
+      border: var(--bw) solid var(--border);
+      padding: 1.5rem;
+      background: var(--bg);
+      font-weight: bold;
+      position: relative;
+    }
+
+    .arch-node::after {
+      content: '→';
+      position: absolute;
+      right: -25px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: var(--border);
+    }
+    .arch-node:last-child::after { content: ''; }
+
+    .command-block {
+      background: oklch(20% 0.01 100);
+      color: #B0B0B0;
+      padding: 1.5rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      border-left: 6px solid var(--accent);
+      margin: 1rem 0;
+      position: relative;
+    }
+
+    .command-block .cmd { color: #FFF; font-weight: bold; }
+    .command-block .comment { color: #666; font-style: italic; }
+
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .dept-card {
+      border: 1px solid var(--border);
+      padding: 1rem;
+      background: var(--bg);
+    }
+
+    .dept-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--accent);
+    }
+
+    .mechanism-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 0;
+    }
+    .mechanism-row:last-child { border-bottom: none; }
+
+    .mech-name { font-weight: bold; text-transform: uppercase; font-size: 0.9rem; }
+    .mech-desc { font-size: 0.85rem; color: var(--muted); }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.8rem;
+    }
+    .info-table th, .info-table td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+    .info-table th {
+      background: var(--border);
+      color: var(--surface);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+    .info-table tr:nth-child(even) { background: var(--bg); }
+
+    .module-badge {
+      display: inline-block;
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      margin-right: 0.5rem;
+      background: var(--bg);
+    }
+
+    @media (max-width: 1100px) {
+      .page-container { grid-template-columns: 1fr; }
+      .sidebar { height: auto; position: relative; border-right: none; border-bottom: var(--bw) solid var(--border); }
+      .sprint-directives { grid-template-columns: 1fr; }
+      .directive-panel { border-right: none; border-bottom: var(--bw) solid var(--border); }
+      .directive-panel:last-child { border-bottom: none; }
+      .subtask-row { grid-template-columns: 60px 70px 1fr 60px; }
+      .roadmap-summary { grid-template-columns: 1fr 1fr; }
+      .arch-diagram { grid-template-columns: 1fr; }
+      .arch-node::after { content: '↓'; top: auto; bottom: -25px; left: 50%; transform: translateX(-50%); }
+      .mechanism-row { grid-template-columns: 1fr; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body onload="initPortal()">
+
+  <div class="page-container">
+    <aside class="sidebar">
+      <div class="logo-area">
+        <h1>FRACTION<br>GUILD<br>CLANS</h1>
+        <div class="subtitle">v2.0 // TECH PORTAL</div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-item active" onclick="switchView('roadmap', this)">
+          <span>[01] ROADMAP</span>
+        </div>
+        <div class="nav-item" onclick="switchView('docs', this)">
+          <span>[02] DOCUMENTATION</span>
+        </div>
+      </nav>
+
+      <div class="meta-info" style="margin-top: auto; font-size: 0.7rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <p>SYS_STATUS: DEVELOPMENT</p>
+        <p>BUILD: 2026.06.18.01</p>
+        <p>COMPAT: 1.20.x - 1.21.11</p>
+      </div>
+    </aside>
+
+    <main class="main-view">
+
+      <!-- VIEW: ROADMAP -->
+      <section id="view-roadmap" class="view-section active">
+        <div style="display: flex; flex-direction: column; gap: 4rem;">
+
+          <footer class="roadmap-summary">
+            <div class="summary-stat"><div class="label">Total Project Effort</div><div class="value">450h</div></div>
+            <div class="summary-stat"><div class="label">Sprints</div><div class="value">9</div></div>
+            <div class="summary-stat"><div class="label">Subtasks</div><div class="value">582</div></div>
+            <div class="summary-stat"><div class="label">Overall Completion</div><div class="value" id="overall-progress">0%</div></div>
+          </footer>
+
+          <!-- SPRINT 0 -->
+          <div class="sprint-block" id="sprint-0">
+            <div class="sprint-header" onclick="toggleSprint('sprint-0')">
+              <h2>Sprint 0: Infrastruktura i Architektura (Tydzien 1-2)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-0" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Stworzenie szkieletu pluginu, systemu modulow, bazy danych i systemu jezykowego.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Plugin sie kompiluje i laduje na serwerze</li>
+                    <li class="dod-item">System modulow laduje/wylacza moduly bez bledow</li>
+                    <li class="dod-item">Baza danych tworzy tabele automatycznie</li>
+                    <li class="dod-item">LangManager wyswietla tlumaczenia w jezyku polskim</li>
+                    <li class="dod-item">/guild admin module list pokazuje status wszystkich modulow</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card completed" id="task-0_1">
+                <div class="task-main" onclick="toggleTask('task-0_1')">
+                  <div class="task-main-left"><span class="task-num">0.1</span><span class="task-title">Setup Projektu</span></div>
+                  <span class="task-tag">INFRA</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.1.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Stworzenie struktury katalogow Maven/Gradle</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.1.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Konfiguracja plugin.yml (nazwa, wersja, komendy, permisje)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Konfiguracja Paper API dependency (1.20-1.21.11 compatibility)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.1.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Setup Git + .gitignore</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card completed" id="task-0_2">
+                <div class="task-main" onclick="toggleTask('task-0_2')">
+                  <div class="task-main-left"><span class="task-num">0.2</span><span class="task-title">System Modulow (ModuleLoader)</span></div>
+                  <span class="task-tag">INFRA</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.2.1</div>
+                    <div class="subtask-cell cell-time">4h</div>
+                    <div class="subtask-cell cell-desc">Interfejs BaseModule -- onEnable(), onDisable(), onReload()</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.2.2</div>
+                    <div class="subtask-cell cell-time">4h</div>
+                    <div class="subtask-cell cell-desc">ModuleLoader -- wczytywanie modulow z config.yml</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.2.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Sortowanie topologiczne zaleznosci modulow</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.2.4</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Rejestracja/unrejestracja listenerow i komend per-modul</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komendy admina: /guild admin module list/enable/disable/reload</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card completed" id="task-0_3">
+                <div class="task-main" onclick="toggleTask('task-0_3')">
+                  <div class="task-main-left"><span class="task-num">0.3</span><span class="task-title">Baza Danych</span></div>
+                  <span class="task-tag">INFRA</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.3.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Abstrakcyjny DatabaseManager (SQLite + MySQL + PostgreSQL)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Integracja HikariCP dla MySQL i PostgreSQL</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.3.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Schemat tabel: guilds, players, cuboids, ranking, transactions, guild_bans, guild_activity_log, guild_egg_logs, seasons</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System migracji schematu (auto-upgrade + SqlDialect)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.3.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">DAO dla encji (GuildDao, PlayerDao, CuboidDao, GuildBanDao, GuildActivityLogDao, GuildEggLogDao, SeasonDao)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card completed" id="task-0_4">
+                <div class="task-main" onclick="toggleTask('task-0_4')">
+                  <div class="task-main-left"><span class="task-num">0.4</span><span class="task-title">System Jezykowy (LangManager)</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Wczytywanie plikow YAML z katalogu lang/</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System fallback (aktywny -> en_US -> raw key)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Parsowanie MiniMessage + legacy kolorow</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Placeholdery w wiadomosciach ({player}, {guild}, {tag}, {points} itp.)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Hot-reload jezyka bez restartu (/guild admin lang reload)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.4.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Przygotowanie pl_PL.yml i en_US.yml z pelnymi tlumaczeniami</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+
+                </div>
+              </div>
+              <div class="task-card completed" id="task-0_5">
+                <div class="task-main" onclick="toggleTask('task-0_5')">
+                  <div class="task-main-left"><span class="task-num">0.5</span><span class="task-title">Konfiguracja</span></div>
+                  <span class="task-tag">INFRA</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.5.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">ConfigManager -- wczytywanie i walidacja YAML</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.5.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Auto-generowanie domyslnych configow przy pierwszym starcie (config.yml + modules/)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.5.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System migracji konfiguracji (schema version)</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.5.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Komendy /guild admin reload i /guild admin debug</div>
+                    <div class="subtask-cell status-check">✓</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-0_6">
+                <div class="task-main" onclick="toggleTask('task-0_6')">
+                  <div class="task-main-left"><span class="task-num">0.6</span><span class="task-title">Dokumentacja Techniczna -- Szkielet</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.6.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Struktura dokumentacji i szablony sekcji</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.6.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Instalacja i struktura plików</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">0.6.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Opis architektury i stacku technologicznego</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 1 -->
+          <div class="sprint-block" id="sprint-1">
+            <div class="sprint-header" onclick="toggleSprint('sprint-1')">
+              <h2>Sprint 1: Rdzen Gildii (Tydzien 3-4)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-1" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Pelny system zakladania, zarzadzania i rozwiazywania gildii.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Gracz moze zalozyc gildie z itemow</li>
+                    <li class="dod-item">System zaproszen i zarzadzania czlonkami dziala</li>
+                    <li class="dod-item">Rangi z odpowiednimi uprawnieniami dzialaja</li>
+                    <li class="dod-item">Teleportacja do home dziala z opoznieniem</li>
+                    <li class="dod-item">Gildia moze byc rozwiazana</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-1_1">
+                <div class="task-main" onclick="toggleTask('task-1_1')">
+                  <div class="task-main-left"><span class="task-num">1.1</span><span class="task-title">Encje i DAO</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.1.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Klasa Guild (id, nazwa, tag, kolor, lider, czlonkowie, punkty, level)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.1.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Klasa GuildMember (uuid, nick, ranga, data dolaczenia)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Enum GuildRank (LEADER, CO_LEADER, MODERATOR, MEMBER, RECRUIT)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">GuildDao -- CRUD operacje na gildiach</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">PlayerDao -- dane graczy (punkty, K/D, aktualna gildia)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-1_2">
+                <div class="task-main" onclick="toggleTask('task-1_2')">
+                  <div class="task-main-left"><span class="task-num">1.2</span><span class="task-title">Zakladanie Gildii</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild create -- walidacja nazwy i tagu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Sprawdzanie unikalnosci nazwy i tagu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Walidacja itemow wymaganych do zalozenia</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Odbieranie itemow z ekwipunku</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Generowanie cuboidu przy zakladaniu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Generowanie jaja gildii w centrum</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.7</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Ustawianie home gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.2.8</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Cooldown na zakladanie (np. 24h po opuszczeniu)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-1_3">
+                <div class="task-main" onclick="toggleTask('task-1_3')">
+                  <div class="task-main-left"><span class="task-num">1.3</span><span class="task-title">Zarzadzanie Czlonkami</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild invite -- system zaproszen</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild join -- akceptacja zaproszenia</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild leave -- opuszczenie gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild kick -- wyrzucenie gracza</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System banowania (/guild ban/unban/banlist)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Awansowanie/degradacja (/guild promote/demote)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.7</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System uprawnien per-ranga</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.3.8</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Limit czlonkow zalezny od levelu gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-1_4">
+                <div class="task-main" onclick="toggleTask('task-1_4')">
+                  <div class="task-main-left"><span class="task-num">1.4</span><span class="task-title">Ustawienia Gildii</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild sethome -- ustawianie domu gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild home -- teleportacja (z opoznieniem i cooldown)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild settitle -- tytuly czlonkow</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Edycja opisu, powitania, MOTD</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Zmiana koloru/komendy gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.4.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System flag publiczna/prywatna</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-1_5">
+                <div class="task-main" onclick="toggleTask('task-1_5')">
+                  <div class="task-main-left"><span class="task-num">1.5</span><span class="task-title">Rozwiazanie Gildii</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.5.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild disband -- rozwiazanie przez lidera</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.5.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Przekazanie przywodztwa (/guild leader )</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.5.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Czyszczenie danych po rozwiazaniu (cuboid, jajo, ranking)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.5.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Komunikat ogolnoserwerowy o upadku gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-1_6">
+                <div class="task-main" onclick="toggleTask('task-1_6')">
+                  <div class="task-main-left"><span class="task-num">1.6</span><span class="task-title">Dokumentacja Systemu Gildii</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.6.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Zakładanie, rangi i członkowie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.6.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Relacje: sojusze, wojny, neutral</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">1.6.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Rozwiązanie i przekazanie przywództwa</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 2 -->
+          <div class="sprint-block" id="sprint-2">
+            <div class="sprint-header" onclick="toggleSprint('sprint-2')">
+              <h2>Sprint 2: Cuboidy i Ochrona Terenow (Tydzien 5-6)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-2" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Wlasny system ochrony z flagami, strefami i levele.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Cuboid blokuje budowe dla obcych</li>
+                    <li class="dod-item">7 flag dziala i jest konfigurowalne</li>
+                    <li class="dod-item">3 strefy maja rozne zasady</li>
+                    <li class="dod-item">Levelowanie cuboidu dziala</li>
+                    <li class="dod-item">TNT jest blokowane na terenie gildii</li>
+                    <li class="dod-item">Granica cuboidu jest widoczna</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-2_1">
+                <div class="task-main" onclick="toggleTask('task-2_1')">
+                  <div class="task-main-left"><span class="task-num">2.1</span><span class="task-title">Architektura Cuboidow</span></div>
+                  <span class="task-tag">CUBOID</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Klasa Cuboid (srodek, promien, wysokosc, gildia)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">CuboidManager -- przechowywanie i wyszukiwanie cuboidow</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Event listenery: BlockPlace, BlockBreak, PlayerInteract</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.4</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">System 7 flag -- evaluator uprawnien</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Flagi per-gildia (lider moze zmieniac)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.1.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Trusted Players -- lista zaufanych bez czlonkostwa</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-2_2">
+                <div class="task-main" onclick="toggleTask('task-2_2')">
+                  <div class="task-main-left"><span class="task-num">2.2</span><span class="task-title">3 Strefy w Cuboidzie</span></div>
+                  <span class="task-tag">CUBOID</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.2.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Detekcja strefy (spawn/build/pvp) na podstawie odleglosci</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.2.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Rozne zasady ochrony per-strefa</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.2.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Wizualizacja granic (czasteczki)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.2.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Border z blokow (opcjonalna wizualizacja)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Hologramy granic (gdzie spawn)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-2_3">
+                <div class="task-main" onclick="toggleTask('task-2_3')">
+                  <div class="task-main-left"><span class="task-num">2.3</span><span class="task-title">System Levele (10 poziomow)</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.3.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Tabela 10 levele w modules/cuboid.yml</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.3.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild levelup -- walidacja wymagan</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Odbieranie kosztow (itemy + waluta)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Zwiekszanie promienia cuboidu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.3.5</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Wymagania: czas gildii, punkty, czlonkowie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-2_4">
+                <div class="task-main" onclick="toggleTask('task-2_4')">
+                  <div class="task-main-left"><span class="task-num">2.4</span><span class="task-title">Ochrona przed TNT i Wybuchami</span></div>
+                  <span class="task-tag">CUBOID</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.4.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Event: EntityExplode -- blokowanie w cuboidzie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Event: BlockExplode -- obsidian/crying obsidian</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Ochrona jaja przed wybuchami (konfigurowalna)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System shield -- czasowa ochrona startowa</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-2_5">
+                <div class="task-main" onclick="toggleTask('task-2_5')">
+                  <div class="task-main-left"><span class="task-num">2.5</span><span class="task-title">Wizualizacja Granicy</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.5.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Czasteczki na granicy cuboidu (/guild cuboid visual)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.5.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Wyswietlanie granicy na czas (np. 10 sekund)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.5.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Optymalizacja -- cuboidy tylko w zaladowanych chunkach</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-2_6">
+                <div class="task-main" onclick="toggleTask('task-2_6')">
+                  <div class="task-main-left"><span class="task-num">2.6</span><span class="task-title">Dokumentacja Cuboidów</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.6.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">7 flag ochronnych i 3 strefy</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.6.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">System levele i trusted players</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">2.6.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Ochrona przed TNT i wizualizacja granic</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 3 -->
+          <div class="sprint-block" id="sprint-3">
+            <div class="sprint-header" onclick="toggleSprint('sprint-3')">
+              <h2>Sprint 3: Jajo Gildii (Tydzien 7-8)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-3" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">System 3-stopniowego niszczenia jaja jako serca gildii.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Jajo generuje sie w centrum cuboidu</li>
+                    <li class="dod-item">3 uderzenia niszcza jajo</li>
+                    <li class="dod-item">Kazdy etap ma inne efekty wizualne</li>
+                    <li class="dod-item">Tarcza chroni przed pierwszym atakiem</li>
+                    <li class="dod-item">Naprawa przywraca 1 zycie</li>
+                    <li class="dod-item">Po zniszczeniu jest 60 min na ochrone</li>
+                    <li class="dod-item">Gildia upada po uplywie czasu</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-3_1">
+                <div class="task-main" onclick="toggleTask('task-3_1')">
+                  <div class="task-main-left"><span class="task-num">3.1</span><span class="task-title">Mechanika Jaja</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Generowanie jaja (Dragon Egg lub Creaking Heart) w centrum cuboidu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.1.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Blok niepodlegajacy gravitacji (Dragon Egg fix)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Hologram nad jajem z nazwa gildii i zyciami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Zabezpieczenie przed przesunieciem (piston-proof)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-3_2">
+                <div class="task-main" onclick="toggleTask('task-3_2')">
+                  <div class="task-main-left"><span class="task-num">3.2</span><span class="task-title">System 3 Zniszczen</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Event: BlockBreak na jajie -- rejestracja uderzenia</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">3 etapy: pelne  uszkodzone  krytyczne  zniszczone</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Czasteczki i dzwieki per-etap</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.4</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Efekty wizualne na ekranie czlonkow (ciemnosc, slabaosc)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Broadcast serwerowy o kazdym uderzeniu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.2.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Log atakow (kto, kiedy, z jakiego IP)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-3_3">
+                <div class="task-main" onclick="toggleTask('task-3_3')">
+                  <div class="task-main-left"><span class="task-num">3.3</span><span class="task-title">Ochrona i Naprawa</span></div>
+                  <span class="task-tag">CUBOID</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Tarcza startowa (30 minutowa ochrona po zalozeniu)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild egg shield -- aktywacja tarczy (koszt)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild egg repair -- naprawa jaja (itemy + cooldown)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System odbudowy po zniszczeniu (60 minut na obrone)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Odliczanie do upadku gildii (broadcast co 10 min)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.3.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Mozliwosc &quot;odbudowania&quot; jaja w czasie karencji</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-3_4">
+                <div class="task-main" onclick="toggleTask('task-3_4')">
+                  <div class="task-main-left"><span class="task-num">3.4</span><span class="task-title">Upadek Gildii</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.4.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Finalne zniszczenie  rozwiazanie gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Usuwanie cuboidu i wszystkich zabezpieczen</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Broadcast o upadku gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Historia upadlych gildii (Hall of Shame)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.4.5</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Nagroda dla niszczycieli</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-3_5">
+                <div class="task-main" onclick="toggleTask('task-3_5')">
+                  <div class="task-main-left"><span class="task-num">3.5</span><span class="task-title">Dokumentacja Jaja Gildii</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.5.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">3 etapy zniszczenia i efekty</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.5.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Naprawa, tarcze i regeneracja</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">3.5.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Upadek gildii i Hall of Shame</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 4 -->
+          <div class="sprint-block" id="sprint-4">
+            <div class="sprint-header" onclick="toggleSprint('sprint-4')">
+              <h2>Sprint 4: Ranking i System PvP (Tydzien 9-10)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-4" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">System punktowy ELO, asysty, sezony i nagrody.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Zabojstwa przyznaja/odejmuja punkty ELO</li>
+                    <li class="dod-item">System asyst dziala (max 3 asysty)</li>
+                    <li class="dod-item">/guild top pokazuje ranking z paginacja</li>
+                    <li class="dod-item">Sezony maja poczatek i koniec</li>
+                    <li class="dod-item">Sojusze i wojny wplywaja na PvP</li>
+                    <li class="dod-item">TOP 3 otrzymuje nagrody</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-4_1">
+                <div class="task-main" onclick="toggleTask('task-4_1')">
+                  <div class="task-main-left"><span class="task-num">4.1</span><span class="task-title">System ELO</span></div>
+                  <span class="task-tag">RANKING</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Implementacja wzoru ELO</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.1.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Skalowanie K-factor</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Punkty startowe i minimum</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Szybki tryb rankingowy (pierwsze 10 gier)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-4_2">
+                <div class="task-main" onclick="toggleTask('task-4_2')">
+                  <div class="task-main-left"><span class="task-num">4.2</span><span class="task-title">Rejestracja Zabojstw</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.2.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Event: PlayerDeath -- rejestracja zabojcy i ofiary</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.2.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">System asyst (obrazenia w ciagu 15s)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.2.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Przeliczanie punktow po kazdym zabojstwie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.2.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Update rankingow graczy i gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild stats -- K/D/A gracza</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-4_3">
+                <div class="task-main" onclick="toggleTask('task-4_3')">
+                  <div class="task-main-left"><span class="task-num">4.3</span><span class="task-title">Topki i Sezony</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.3.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild top -- top gildii z paginacja</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild top players -- top graczy</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System sezonow z konfigurowalnym czasem</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.3.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Reset punktow na nowy sezon (opcjonalny)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-4_4">
+                <div class="task-main" onclick="toggleTask('task-4_4')">
+                  <div class="task-main-left"><span class="task-num">4.4</span><span class="task-title">Sojusze i Wojny</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System relacji: ally, enemy, neutral, truce</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">/guild ally -- sojusz</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">/guild enemy -- wojna</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Wplyw relacji na PvP i dostep do terenow</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Wizualne oznaczenia sojusznikow (tab, nametagi)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.4.6</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Limit sojuszy per-gildia</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-4_5">
+                <div class="task-main" onclick="toggleTask('task-4_5')">
+                  <div class="task-main-left"><span class="task-num">4.5</span><span class="task-title">Dokumentacja Rankingu</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.5.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">System ELO i asysty</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.5.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Topki, sezony i nagrody</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">4.5.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Hall of Fame</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 5 -->
+          <div class="sprint-block" id="sprint-5">
+            <div class="sprint-header" onclick="toggleSprint('sprint-5')">
+              <h2>Sprint 5: GUI i TAB (Tydzien 11-12)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-5" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Pelne menu graficzne i customowa lista graczy.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">/guild menu otwiera pelne GUI gildii</li>
+                    <li class="dod-item">Wszystkie panele (czlonkowie, cuboid, bank, jajo) dzialaja</li>
+                    <li class="dod-item">Menu admina pozwala zarzadzac gildiami</li>
+                    <li class="dod-item">TAB wyswietla 3 kolumny z rankingami</li>
+                    <li class="dod-item">Naglowek/stopka pokazuje dane serwera</li>
+                    <li class="dod-item">Odswiezanie dziala bez lagow</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-5_1">
+                <div class="task-main" onclick="toggleTask('task-5_1')">
+                  <div class="task-main-left"><span class="task-num">5.1</span><span class="task-title">System GUI</span></div>
+                  <span class="task-tag">UI/UX</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Bazowa klasa GUI z paginacja i aktualizacja</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System slotow -- konfiguracja z YAML</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Obsluga klikniec (lewy/prawy/srodkowy)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Animacje otwierania (fade_in, slide_up, random_fill)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Dzwieki przy interakcjach</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.1.6</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Dynamiczne odswiezanie co X tickow</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-5_2">
+                <div class="task-main" onclick="toggleTask('task-5_2')">
+                  <div class="task-main-left"><span class="task-num">5.2</span><span class="task-title">Menu Gildii</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Glowne menu (/guild menu) -- info, czlonkowie, cuboid, ranking</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel czlonkow -- glowki graczy z rolami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel zarzadzania -- zaproszenia, kicki, rangi</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel cuboidu -- level, flagi, trusted</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel banku -- wplata/wyplata/stan</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel jaja -- stan, naprawa, tarcza</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.2.7</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel sojuszy -- lista, zaproszenia, wojny</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-5_3">
+                <div class="task-main" onclick="toggleTask('task-5_3')">
+                  <div class="task-main-left"><span class="task-num">5.3</span><span class="task-title">Menu Admina</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.3.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Lista gildii z filtrowaniem i wyszukiwaniem</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel zarzadzania gildia (ustawienia, delete)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel modulow -- wlaczanie/wylaczanie GUI</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-5_4">
+                <div class="task-main" onclick="toggleTask('task-5_4')">
+                  <div class="task-main-left"><span class="task-num">5.4</span><span class="task-title">Custom TAB</span></div>
+                  <span class="task-tag">UI/UX</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">System 3 kolumn: lewa (TOP gildii), srodkowa (gracze), prawa (TOP graczy)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Naglowek i stopka z placeholdermi</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Odswiezanie per-kolumna (rozne interwaly)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Sortowanie graczy (gildia  punkty  alfabetycznie)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Formatowanie nickow z tagiem gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.4.6</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Wsparcie dla PlaceholderAPI w TAB</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-5_5">
+                <div class="task-main" onclick="toggleTask('task-5_5')">
+                  <div class="task-main-left"><span class="task-num">5.5</span><span class="task-title">Dokumentacja GUI i TAB</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.5.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Menu gildii i podmenu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.5.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Animacje i dynamic refresh</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">5.5.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Custom TAB i placeholdery</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 6 -->
+          <div class="sprint-block" id="sprint-6">
+            <div class="sprint-header" onclick="toggleSprint('sprint-6')">
+              <h2>Sprint 6: Ekonomia, Wiesniacy, Pay-to-Join (Tydzien 13-14)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-6" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">System ekonomiczny, handlarze gildii i oplaty za dolaczenie.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">EcoCore lub itemy jako waluta dziala</li>
+                    <li class="dod-item">Bank gildii z odsetkami dziala</li>
+                    <li class="dod-item">Wiesniak handlarz oferuje wymiane</li>
+                    <li class="dod-item">Wiesniak zleceniodawca daje zadania</li>
+                    <li class="dod-item">System reputacji wplywa na ceny</li>
+                    <li class="dod-item">Pay-to-join dziala w obu trybach</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-6_1">
+                <div class="task-main" onclick="toggleTask('task-6_1')">
+                  <div class="task-main-left"><span class="task-num">6.1</span><span class="task-title">EcoCore Integration</span></div>
+                  <span class="task-tag">ECONOMY</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">EcoCore API -- detekcja pluginu na serwerze</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Adapter: waluty, banki, transakcje</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Fallback: itemy jako waluta (standalone mode)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">/guild deposit, /guild withdraw</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Bank gildii z odsetkami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.1.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Transakcje miedzy gildiami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-6_2">
+                <div class="task-main" onclick="toggleTask('task-6_2')">
+                  <div class="task-main-left"><span class="task-num">6.2</span><span class="task-title">Wiesniacy Gildii</span></div>
+                  <span class="task-tag">ECONOMY</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Tworzenie custom NPC (ArmorStand + glowka)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">3 typy: Handlarz, Zleceniodawca, Straznik</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.3</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">System ofert handlarza -- pulowanie z YAML</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">GUI handlu (wymiana itemow)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.5</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">System zadan (zabij, zbierz, obron) z nagrodami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System reputacji -- wplyw na ceny i nagrody</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.2.7</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Limit wiesniakow per-gildia i per-level</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-6_3">
+                <div class="task-main" onclick="toggleTask('task-6_3')">
+                  <div class="task-main-left"><span class="task-num">6.3</span><span class="task-title">Pay-to-Join</span></div>
+                  <span class="task-tag">ECONOMY</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.3.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System oplaty w itemach za dolaczenie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">System oplaty w walucie (EcoCore)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Jednorazowa oplata lub subskrypcja</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.3.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Okres probny (opcjonalny)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.3.5</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">System zwrotow przy wyrzuceniu</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-6_4">
+                <div class="task-main" onclick="toggleTask('task-6_4')">
+                  <div class="task-main-left"><span class="task-num">6.4</span><span class="task-title">Dokumentacja Ekonomii i Wieśniaków</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.4.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">EcoCore i tryb standalone</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.4.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Wieśniacy, handel i zadania</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">6.4.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Pay-to-Join</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 7 -->
+          <div class="sprint-block" id="sprint-7">
+            <div class="sprint-header" onclick="toggleSprint('sprint-7')">
+              <h2>Sprint 7: Mapa HTML, Webhook, Backup (Tydzien 15-16)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-7" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Mapa w przegladarce, powiadomienia Discord i kopie zapasowe.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Mapa HTML generuje sie i wyswietla cuboidy</li>
+                    <li class="dod-item">/guild map pokazuje mape ASCII</li>
+                    <li class="dod-item">Webhook Discord wysyla powiadomienia</li>
+                    <li class="dod-item">Backup tworzy sie automatycznie</li>
+                    <li class="dod-item">Przywracanie z kopii dziala</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-7_1">
+                <div class="task-main" onclick="toggleTask('task-7_1')">
+                  <div class="task-main-left"><span class="task-num">7.1</span><span class="task-title">Mapa Serwera HTML</span></div>
+                  <span class="task-tag">INTEGRATION</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Generator mapy -- render chunkow do PNG</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Eksport do HTML+CSS+JS</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Rysowanie cuboidow jako kolorowe poligony</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Markery jaj gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Panel boczny z lista gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Aktualizacja na zywo (WebSocket lub polling)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.1.7</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Konfiguracja w modules/map.yml</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-7_2">
+                <div class="task-main" onclick="toggleTask('task-7_2')">
+                  <div class="task-main-left"><span class="task-num">7.2</span><span class="task-title">Mapa ASCII w Czacie</span></div>
+                  <span class="task-tag">INTEGRATION</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.2.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Komenda /guild map -- mapa ASCII</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.2.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Symbole: # = twoja gildia, - = wroga, + = sojusznicza</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.2.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Kompass (N/E/S/W) na mapie</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-7_3">
+                <div class="task-main" onclick="toggleTask('task-7_3')">
+                  <div class="task-main-left"><span class="task-num">7.3</span><span class="task-title">Discord Webhook</span></div>
+                  <span class="task-tag">INTEGRATION</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.3.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Konfiguracja webhook URL w modules/webhook.yml</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Embed messages za zalozenie gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Embed messages za upadek gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.3.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Embed messages za wojny i sojusze</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-7_4">
+                <div class="task-main" onclick="toggleTask('task-7_4')">
+                  <div class="task-main-left"><span class="task-num">7.4</span><span class="task-title">System Kopii Zapasowych</span></div>
+                  <span class="task-tag">CORE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.4.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Automatyczny backup co X godzin</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Reczny backup (/guild admin backup)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Kompresja do ZIP</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.4.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Retencja (usuwanie starych backupow)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.4.5</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Przywracanie z kopii (/guild admin restore)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-7_5">
+                <div class="task-main" onclick="toggleTask('task-7_5')">
+                  <div class="task-main-left"><span class="task-num">7.5</span><span class="task-title">Dokumentacja Mapy, Webhooków i Backupu</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.5.1</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Mapa HTML i ASCII</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.5.2</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Discord webhooki</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">7.5.3</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">System kopii zapasowych</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPRINT 8 -->
+          <div class="sprint-block" id="sprint-8">
+            <div class="sprint-header" onclick="toggleSprint('sprint-8')">
+              <h2>Sprint 8: Optymalizacja, Testowanie, Release (Tydzien 17-18)</h2>
+              <input type="checkbox" class="sprint-checkbox" id="check-sprint-8" onclick="event.stopPropagation()">
+            </div>
+
+            <div class="sprint-directives">
+              <div class="directive-panel">
+                <h3>SPRINT_GOAL</h3>
+                <div class="directive-content">Wydajny, stabilny plugin gotowy do produkcji.</div>
+              </div>
+              <div class="directive-panel">
+                <h3>DEFINITION_OF_DONE (DoD)</h3>
+                <div class="directive-content">
+                  <ul class="dod-list">
+                    <li class="dod-item">Plugin dziala stabilnie z 100+ gildiami</li>
+                    <li class="dod-item">Testy przechodza bez bledow</li>
+                    <li class="dod-item">API publiczne jest udokumentowane</li>
+                    <li class="dod-item">PlaceholderAPI rejestruje wszystkie placeholdery</li>
+                    <li class="dod-item">Plugin jest gotowy do publikacji</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="sprint-content">
+              <div class="task-card" id="task-8_1">
+                <div class="task-main" onclick="toggleTask('task-8_1')">
+                  <div class="task-main-left"><span class="task-num">8.1</span><span class="task-title">Optymalizacja Wydajnosci</span></div>
+                  <span class="task-tag">RELEASE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Profiling -- zidentyfikowac waskie gardla</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Asynchroniczne zapytania do bazy</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Caching cuboidow w pamieci</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.4</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Lazy loading danych gildii</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.5</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Rate-limiter dla komend</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.1.6</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Optymalizacja TAB (packet batching)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-8_2">
+                <div class="task-main" onclick="toggleTask('task-8_2')">
+                  <div class="task-main-left"><span class="task-num">8.2</span><span class="task-title">Testowanie</span></div>
+                  <span class="task-tag">RELEASE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.2.1</div>
+                    <div class="subtask-cell cell-time">4h</div>
+                    <div class="subtask-cell cell-desc">Testy jednostkowe -- core, moduly, DAO</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.2.2</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Testy integracyjne -- pelne scenariusze</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.2.4</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">Testy wydajnosciowe -- 100+ gildii, 50+ graczy</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-8_3">
+                <div class="task-main" onclick="toggleTask('task-8_3')">
+                  <div class="task-main-left"><span class="task-num">8.3</span><span class="task-title">API Publiczne</span></div>
+                  <span class="task-tag">RELEASE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.3.1</div>
+                    <div class="subtask-cell cell-time">3h</div>
+                    <div class="subtask-cell cell-desc">FGCAPI -- interfejs dla deweloperow</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.3.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Eventy: GuildCreateEvent, GuildDisbandEvent, EggDestroyEvent</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.3.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">PlaceholderAPI -- %fgc_guild%, %fgc_tag%, %fgc_points% itp.</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.3.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Dokumentacja API (JavaDoc)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-8_4">
+                <div class="task-main" onclick="toggleTask('task-8_4')">
+                  <div class="task-main-left"><span class="task-num">8.4</span><span class="task-title">Finalne Poprawki i Release</span></div>
+                  <span class="task-tag">RELEASE</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.4.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Cleanup kodu -- usuniecie TODO, debug prints</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.4.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">Finalne tlumaczenia pl_PL.yml i en_US.yml</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.4.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">SpigotMC/BuildByBit -- opis, screenshoty, cena</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.4.4</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Przygotowanie pliku JAR z pelnymi configami</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.4.5</div>
+                    <div class="subtask-cell cell-time">1h</div>
+                    <div class="subtask-cell cell-desc">Lista zmian (CHANGELOG.md)</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card" id="task-8_5">
+                <div class="task-main" onclick="toggleTask('task-8_5')">
+                  <div class="task-main-left"><span class="task-num">8.5</span><span class="task-title">Finalizacja Dokumentacji</span></div>
+                  <span class="task-tag">DOCS</span>
+                </div>
+                <div class="subtask-container">
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.5.1</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">JavaDoc API publicznego</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.5.2</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">README i CHANGELOG</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                    <div class="subtask-cell cell-id">8.5.3</div>
+                    <div class="subtask-cell cell-time">2h</div>
+                    <div class="subtask-cell cell-desc">SpigotMC/BuildByBit opis</div>
+                    <div class="subtask-cell status-check">☐</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW: DOCUMENTATION -->
+      <section id="view-docs" class="view-section">
+        <div class="doc-grid">
+
+          <!-- ARCHITEKTURA SYSTEMU -->
+          <div class="doc-section">
+            <h2>01 // ARCHITEKTURA SYSTEMU</h2>
+<p>Fraction Guild Clans v2.0 to samowystarczalny plugin na serwery Paper/Spigot/Purpur (Minecraft 1.20–1.21.11). Nie wymaga zewnętrznych zależności. Cała logika rozgrywkowa, ekonomiczna i ochronna jest definiowana deklaratywnie poprzez pliki konfiguracyjne YAML.</p>
+            <div class="arch-diagram">
+              <div class="arch-node">PAPER API<br><span style="font-size: 0.6rem; font-weight: normal;">1.20.x – 1.21.11</span></div>
+              <div class="arch-node">CORE MODULES<br><span style="font-size: 0.6rem; font-weight: normal;">guild, economy, lang, database</span></div>
+              <div class="arch-node">OPTIONAL MODULES<br><span style="font-size: 0.6rem; font-weight: normal;">cuboid, egg, ranking, gui, tab...</span></div>
+              <div class="arch-node">PERSISTENCE<br><span style="font-size: 0.6rem; font-weight: normal;">SQLite / MySQL / PostgreSQL</span></div>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--muted);">Moduły ładują się zgodnie z zależnościami (sortowanie topologiczne). Wyłączenie modułu zwalnia jego listenery, komendy i taski. Stack: Java 17+, Maven/Gradle, HikariCP, MiniMessage + legacy, własny GUI oparty na Bukkit Inventory API.</p>
+          </div>
+
+          <!-- KOMENDY SYSTEMOWE -->
+          <div class="doc-section">
+            <h2>02 // KOMENDY SYSTEMOWE</h2>
+<p>Szybkie referencje dla administratora serwera i dewelopera.</p>
+            <div class="command-block">
+              <div class="comment"># Podstawowe komendy gracza</div>
+              <div class="cmd">/guild create &lt;nazwa&gt; &lt;tag&gt;</div>
+              <div class="cmd">/guild invite &lt;gracz&gt;  /  /guild join &lt;gildia&gt;</div>
+              <div class="cmd">/guild menu  /  /guild top  /  /guild map</div>
+            </div>
+            <div class="command-block">
+              <div class="comment"># Komendy administratora</div>
+              <div class="cmd">/guild admin module list/enable/disable/reload [moduł]</div>
+              <div class="cmd">/guild admin backup  /  /guild admin restore &lt;data&gt;</div>
+              <div class="cmd">/guild admin lang reload  /  /guild admin debug</div>
+            </div>
+          </div>
+
+          <!-- MODUŁY SYSTEMU -->
+          <div class="doc-section">
+            <h2>03 // MODUŁY SYSTEMU</h2>
+<p>14 niezależnych modułów. Każdy posiada własny plik YAML w katalogu modules/ i może być włączany/wyłączany bez restartu serwera.</p>
+            <table class="info-table">
+              <tr><th>Moduł</th><th>Plik</th><th>Zależy od</th><th>Opis</th></tr>
+              <tr><td><span class="module-badge">guild</span></td><td>guild.yml</td><td>--</td><td>Rdzeń: zakładanie, członkowie, rangi, relacje</td></tr>
+              <tr><td><span class="module-badge">cuboid</span></td><td>cuboid.yml</td><td>guild</td><td>Ochrona terenów, 7 flag, 3 strefy, levele</td></tr>
+              <tr><td><span class="module-badge">egg</span></td><td>egg.yml</td><td>cuboid, guild</td><td>Jajo gildii, 3 życia, naprawa, upadek</td></tr>
+              <tr><td><span class="module-badge">economy</span></td><td>economy.yml</td><td>--</td><td>EcoCore lub itemy jako waluta</td></tr>
+              <tr><td><span class="module-badge">ranking</span></td><td>ranking.yml</td><td>guild</td><td>ELO, asysty, K/D/A, sezony</td></tr>
+              <tr><td><span class="module-badge">gui</span></td><td>gui.yml</td><td>guild, cuboid</td><td>Menu graficzne</td></tr>
+              <tr><td><span class="module-badge">tab</span></td><td>tab.yml</td><td>guild, ranking</td><td>Lista graczy (TAB)</td></tr>
+              <tr><td><span class="module-badge">map</span></td><td>map.yml</td><td>guild, cuboid</td><td>Mapa HTML + ASCII</td></tr>
+              <tr><td><span class="module-badge">villagers</span></td><td>villagers.yml</td><td>guild, economy</td><td>Handlarze gildii</td></tr>
+              <tr><td><span class="module-badge">join_items</span></td><td>join_items.yml</td><td>--</td><td>Pay-to-join</td></tr>
+              <tr><td><span class="module-badge">lang</span></td><td>lang.yml</td><td>--</td><td>System i18n, hot-reload</td></tr>
+              <tr><td><span class="module-badge">database</span></td><td>database.yml</td><td>--</td><td>SQLite / MySQL / PostgreSQL</td></tr>
+              <tr><td><span class="module-badge">backup</span></td><td>backup.yml</td><td>database</td><td>Kopie zapasowe</td></tr>
+              <tr><td><span class="module-badge">webhook</span></td><td>webhook.yml</td><td>guild</td><td>Discord webhooki</td></tr>
+            </table>
+          </div>
+
+          <!-- FILOZOFIA I WYMAGANIA -->
+          <div class="doc-section">
+            <h2>04 // FILOZOFIA I WYMAGANIA</h2>
+<p>FGC to zaawansowany plugin serwerowy przeznaczony dla Paper, Spigot i Purpur, łączący klasyczne systemy gildii z nowoczesną architekturą modularną. Filozofia <em>"Everything is Configurable"</em> oznacza, że każdą funkcjonalność można włączyć lub wyłączyć, każdy koszt i wiadomość są konfigurowalne, a każdy element GUI można zmienić bez znajomości programowania.</p>
+            <ul>
+              <li><strong>Zero zależności:</strong> nie wymaga Vault, WorldGuard, WorldEdit, EssentialsX ani CMI.</li>
+              <li><strong>Opcjonalne integracje:</strong> PlaceholderAPI (placeholdery %fgc_*), EcoCore (zaawansowana ekonomia).</li>
+              <li><strong>Wspierane silniki:</strong> Paper 1.20.x–1.21.11 (zalecany), Spigot 1.20.x–1.21.11, Purpur 1.20.x–1.21.11.</li>
+              <li><strong>Filozofia modułowa:</strong> każda funkcja to osobny plik YAML w modules/, aktywowany jednym przełącznikiem enabled.</li>
+            </ul>
+          </div>
+
+          <!-- INSTALACJA I STRUKTURA PLIKÓW -->
+          <div class="doc-section">
+            <h2>05 // INSTALACJA I STRUKTURA PLIKÓW</h2>
+<p>Instalacja sprowadza się do umieszczenia pliku <code>FractionGuildClans-2.0.jar</code> w katalogu plugins/ serwera. Po restarcie plugin automatycznie generuje strukturę katalogów i plików konfiguracyjnych z komentarzami.</p>
+            <table class="info-table">
+              <tr><th>Katalog/Plik</th><th>Przeznaczenie</th></tr>
+              <tr><td>config.yml</td><td>Główna konfiguracja: parametry globalne, prefixy, formaty wiadomości, TPS</td></tr>
+              <tr><td>lang/</td><td>Pliki językowe (pl_PL.yml, en_US.yml, de_DE.yml...) z hot-reloadem</td></tr>
+              <tr><td>modules/</td><td>14 plików YAML, każdy odpowiada za jeden moduł funkcjonalny</td></tr>
+              <tr><td>data/</td><td>Baza danych: SQLite domyślnie, opcja MySQL/PostgreSQL w config.yml</td></tr>
+              <tr><td>backups/</td><td>Automatyczne kopie zapasowe ZIP z datownikiem</td></tr>
+              <tr><td>logs/</td><td>Logi transakcji ekonomicznych, zmian w gildiach, audyt bezpieczeństwa</td></tr>
+            </table>
+          </div>
+
+          <!-- ECOCORE -- WŁASNY SYSTEM EKONOMII -->
+          <div class="doc-section">
+            <h2>06 // ECOCORE -- WŁASNY SYSTEM EKONOMII</h2>
+<p>FGC v2.0 nie używa Vault. Zamiast tego oferuje EcoCore – autorski system ekonomiczny tego samego autora, lub tryb standalone oparty na itemach.</p>
+            <ul>
+              <li><strong>EcoCore:</strong> wielowalutowość, banki gildii z odsetkami, transakcje międzygildiowe, pełny audyt.</li>
+              <li><strong>Tryb standalone:</strong> itemy (domyślnie diamenty) jako waluta; komendy /guild deposit, /guild withdraw działają identycznie.</li>
+              <li><strong>Przełączanie:</strong> parametr <code>mode: "ecocore"</code> lub <code>mode: "items"</code> w modules/economy.yml + reload modułu.</li>
+            </ul>
+            <div class="command-block">
+              <div class="comment"># Przykład konfiguracji waluty w economy.yml</div>
+              <div class="cmd">currencies:</div>
+              <div class="cmd">  primary: { name: "Moneta", symbol: "&e", format: "{amount} {symbol}", decimals: 2 }</div>
+              <div class="cmd">bank: { enabled: true, interest_rate: 0.5, interest_interval: "24h" }</div>
+            </div>
+          </div>
+
+          <!-- CUBOIDY I WŁASNA OCHRONA -->
+          <div class="doc-section">
+            <h2>07 // CUBOIDY I WŁASNA OCHRONA</h2>
+<p>Wbudowany system ochrony oparty jest na cuboidach (obszarach cylindrycznych) wokół jaja gildii. Nie wymaga WorldGuard ani WorldEdit, co eliminuje konflikty priorytetów regionów i zmniejsza narzut wydajnościowy.</p>
+            <ul>
+              <li><strong>3 strefy:</strong> spawn (10% promienia, tylko lider/co-lider), build (75%, członkowie + zaufani), PvP (100%, wszyscy mogą walczyć).</li>
+              <li><strong>7 flag:</strong> build, destroy, pvp, use, bucket, entry, interact – wartości ALLOW/DENY/MEMBERS/ALLIES/LEADER.</li>
+              <li><strong>Trusted Players:</strong> zaufani gracze spoza gildii z indywidualnymi uprawnieniami, domyślnie limit 10 per gildia.</li>
+              <li><strong>System levele:</strong> 10 poziomów cuboidu, zwiększających promień; wymagania: czas gildii, punkty, członkowie, itemy/waluta.</li>
+            </ul>
+          </div>
+
+          <!-- SYSTEM PLIKÓW JĘZYKOWYCH -->
+          <div class="doc-section">
+            <h2>08 // SYSTEM PLIKÓW JĘZYKOWYCH</h2>
+<p>System i18n oparty na plikach YAML w katalogu lang/. Wspiera hierarchiczne klucze, MiniMessage, legacy &k, placeholdery oraz hot-reload bez restartu.</p>
+            <ul>
+              <li><strong>Fallback:</strong> aktywny język → en_US.yml → raw key. Nigdy nie zwraca pustej wiadomości.</li>
+              <li><strong>Formatowanie:</strong> MiniMessage (&lt;color&gt;, &lt;bold&gt;, &lt;gradient&gt;) oraz legacy (&amp;a, &amp;l) rozpoznawane automatycznie.</li>
+              <li><strong>Placeholdery:</strong> {player}, {guild}, {tag}, {points}, {level}, {lives}, {radius}, {members}, {balance}, {time}, {sender}, {target}, {amount}, {item}, {price}, {rank}, {position}.</li>
+              <li><strong>Kategorie prefiksów:</strong> prefix.info, prefix.error, prefix.success, prefix.warning.</li>
+            </ul>
+            <div class="command-block">
+              <div class="comment"># Hot-reload języka</div>
+              <div class="cmd">/guild admin lang reload</div>
+            </div>
+          </div>
+
+          <!-- SYSTEM GILDII -->
+          <div class="doc-section">
+            <h2>09 // SYSTEM GILDII</h2>
+<p>Pełny system zarządzania gildią: zakładanie, członkowie, rangi, relacje i rozwiazanie.</p>
+            <ul>
+              <li><strong>Zakładanie:</strong> /guild create &lt;nazwa&gt; &lt;tag&gt; [kolor] – walidacja nazwy, unikalności, itemów, odległości od innych gildii.</li>
+              <li><strong>Rangi:</strong> LEADER, CO_LEADER, MODERATOR, MEMBER, RECRUIT – z konfigurowalnym zestawem uprawnień w modules/guild.yml.</li>
+              <li><strong>Członkowie:</strong> zaproszenia, join, leave, kick, ban/unban, promote/demote, limity zależne od poziomu.</li>
+              <li><strong>Ustawienia:</strong> sethome/home z opóźnieniem, tytuły członków, opis, MOTD, kolor, flaga publiczna/prywatna.</li>
+              <li><strong>Relacje:</strong> sojusze (/guild ally), wojny (/guild enemy), neutral, truce – wpływają na PvP i dostęp do terenów.</li>
+              <li><strong>Rozwiazanie:</strong> potwierdzenie, opcjonalny zwrot kosztów, czyszczenie danych, broadcast serwerowy.</li>
+            </ul>
+          </div>
+
+          <!-- JAJO GILDII -- SYSTEM OBRONY -->
+          <div class="doc-section">
+            <h2>10 // JAJO GILDII -- SYSTEM OBRONY</h2>
+<p>Jajo gildii to serce systemu obrony. Jego zniszczenie prowadzi do upadku gildii po czasie karencji.</p>
+            <ul>
+              <li><strong>3 etapy zniszczenia:</strong> Pełne (3/3) → Uszkodzone (2/3) → Krytyczne (1/3) → Zniszczone (0/3).</li>
+              <li><strong>Efekty:</strong> cząsteczki, dym, dźwięki, ciemność i słabość dla członków, broadcast serwerowy.</li>
+              <li><strong>Ochrona:</strong> tarcza startowa 30 min, komenda /guild egg shield (płatna), /guild egg shield.</li>
+              <li><strong>Naprawa:</strong> /guild egg repair przywraca 1 życie; cooldown 24h globalnie, wymagane itemy.</li>
+              <li><strong>Upadek:</strong> po zniszczeniu 60 minut na obronę; broadcast, Hall of Shame, nagroda dla niszczycieli.</li>
+            </ul>
+          </div>
+
+          <!-- WIEŚNIACY HANDLOWI -->
+          <div class="doc-section">
+            <h2>11 // WIEŚNIACY HANDLOWI</h2>
+<p>Customowe NPC gildii oferują handel, zadania i wymianę surowców.</p>
+            <ul>
+              <li><strong>Tworzenie:</strong> /guild villager create &lt;typ&gt; &lt;nazwa&gt; – tylko w obrębie własnego cuboidu, limit zależny od poziomu.</li>
+              <li><strong>Typy:</strong> Handlarz, Zleceniodawca, Straznik (kowal, alchemik, bibliotekarz, rybak, łowca).</li>
+              <li><strong>Handel:</strong> oferty konfigurowane w YAML, GUI wymiany, cooldown transakcji globalny, poziom relacji wpływa na ceny.</li>
+              <li><strong>Zadania dzienne:</strong> zabij, zbierz, obron – z nagrodami i systemem reputacji.</li>
+              <li><strong>Ochrona:</strong> interakcja tylko dla członków gildii; NPC są invulnerable.</li>
+            </ul>
+          </div>
+
+          <!-- GUI -- INTERFEJS GRAFICZNY -->
+          <div class="doc-section">
+            <h2>12 // GUI -- INTERFEJS GRAFICZNY</h2>
+<p>Pełne menu graficzne konfigurowane z plików YAML. Wszystkie ekrany wspierają animacje, dźwięki i dynamiczne odświeżanie.</p>
+            <ul>
+              <li><strong>Główne menu (/guild menu):</strong> info, członkowie, cuboid, ranking, bank, jajo, sojusze.</li>
+              <li><strong>Podmenu:</strong> zarządzanie członkami, ustawienia gildii (toggle, opis, kolory, flagi), handel z wiesniakiem, ranking.</li>
+              <li><strong>Animacje:</strong> fade_in, slide_up, random_fill; dźwięki przy otwarciu, kliknięciu i zamknięciu.</li>
+              <li><strong>Dynamic refresh:</strong> aktualizacja slotów co X ticków bez zamykania GUI; lazy refresh oparty na hashu zawartości.</li>
+            </ul>
+          </div>
+
+          <!-- RANKING GILDII -->
+          <div class="doc-section">
+            <h2>13 // RANKING GILDII</h2>
+<p>System rankingowy oparty na algorytmie ELO z asystami, K/D/A i sezonami.</p>
+            <ul>
+              <li><strong>ELO:</strong> base_k: 32, k_scaling, start_points: 1000, min_points: 1, szybki tryb rankingowy (pierwsze 10 gier).</li>
+              <li><strong>Asysty:</strong> time_window 15s, min 15% obrażeń, max 3 asysty za zabójstwo.</li>
+              <li><strong>Topki:</strong> /guild top (gildie), /guild top players (gracze) z paginacją i filtrowaniem.</li>
+              <li><strong>Sezony:</strong> konfigurowalny czas (domyślnie 3 miesiące), opcjonalny reset punktów, finale multiplier, nagrody TOP 3.</li>
+              <li><strong>Hall of Fame:</strong> archiwum zwycięzców poprzednich sezonów dostępne w grze i na stronie HTML.</li>
+            </ul>
+          </div>
+
+          <!-- MAPA SERWERA HTML -->
+          <div class="doc-section">
+            <h2>14 // MAPA SERWERA HTML</h2>
+<p>Interaktywna mapa gildii generowana do przeglądarki oraz uproszczona mapa ASCII w czacie.</p>
+            <ul>
+              <li><strong>HTML:</strong> statyczny HTML+CSS+JS w folderze web/map/, render chunków do PNG, kolorowe poligony cuboidów, markery jaj.</li>
+              <li><strong>Aktualizacja na żywo:</strong> tryb polling (domyślnie), WebSocket lub none – zależnie od config.yml.</li>
+              <li><strong>Panel boczny:</strong> lista gildii; kliknięcie centruje mapę i pokazuje informacje.</li>
+              <li><strong>ASCII:</strong> /guild map – symbole # (twoja), - (wroga), + (sojusznicza), kompas N/E/S/W.</li>
+            </ul>
+          </div>
+
+          <!-- CUSTOM TABULATOR -->
+          <div class="doc-section">
+            <h2>15 // CUSTOM TABULATOR</h2>
+<p>Niestandardowa lista graczy (TAB) z rankingiem, prefixami gildii i animacjami.</p>
+            <ul>
+              <li><strong>3 kolumny:</strong> lewa (TOP 20 graczy), środkowa (gracze online), prawa (TOP 10 gildii).</li>
+              <li><strong>Nagłówek/stopka:</strong> nazwa serwera, sezon, gracze online, TPS, RAM, adres strony.</li>
+              <li><strong>Sortowanie:</strong> gildia → punkty → alfabetycznie; formatowanie nicków z tagiem gildii.</li>
+              <li><strong>Wsparcie PlaceholderAPI:</strong> %guild_name%, %guild_tag%, %guild_rank%, %guild_points%, %guild_level%.</li>
+            </ul>
+          </div>
+
+          <!-- SYSTEM MODUŁÓW I KONFIGURACJA -->
+          <div class="doc-section">
+            <h2>16 // SYSTEM MODUŁÓW I KONFIGURACJA</h2>
+<p>Architektura modułowa to fundament wersji 2.0. Każdy moduł to samodzielna jednostka z własnymi komendami, listenerami i plikiem YAML.</p>
+            <ul>
+              <li><strong>Cykl życia:</strong> DISABLED → LOADING → ENABLED → RUNNING. Wyłączenie zwalnia wszystkie zasoby.</li>
+              <li><strong>Zależności:</strong> sortowanie topologiczne podczas startu; brak wymaganego modułu = błąd w logach i pozostawienie w stanie nieaktywnym.</li>
+              <li><strong>ConfigManager:</strong> wczytywanie i walidacja YAML, auto-generowanie domyślnych configów, migracja schematu.</li>
+              <li><strong>DatabaseManager:</strong> abstrakcja SQLite/MySQL/PostgreSQL, HikariCP, automatyczne migracje schematu.</li>
+              <li><strong>Webhooki i backup:</strong> powiadomienia Discord o założeniu/upadku/sojuszach/wojnach; kopie zapasowe ZIP z retencją i przywracaniem.</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function switchView(viewId, element) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      element.classList.add('active');
+      document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+      document.getElementById('view-' + viewId).classList.add('active');
+    }
+
+    function toggleSubtask(row) {
+      const checkCell = row.querySelector('.status-check');
+      const isDone = checkCell.innerText === '✓';
+      checkCell.innerText = isDone ? '☐' : '✓';
+      row.classList.toggle('completed', !isDone);
+      updateGlobalProgress();
+    }
+
+    function toggleTask(taskId) {
+      const card = document.getElementById(taskId);
+      card.classList.toggle('completed');
+    }
+
+    function toggleSprint(sprintId) {
+      const block = document.getElementById(sprintId);
+      const checkbox = block.querySelector('.sprint-checkbox');
+      checkbox.checked = !checkbox.checked;
+      block.classList.toggle('sprint-completed', checkbox.checked);
+    }
+
+    function updateGlobalProgress() {
+      const allSubtasks = document.querySelectorAll('.subtask-row');
+      const completed = document.querySelectorAll('.subtask-row.completed');
+      const percent = Math.round((completed.length / allSubtasks.length) * 100) || 0;
+      const progressEl = document.getElementById('overall-progress');
+      if(progressEl) progressEl.innerText = percent + '%';
+    }
+
+    function initPortal() {
+      updateGlobalProgress();
+    }
+  </script>
+</body>
+</html>

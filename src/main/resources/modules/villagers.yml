@@ -1,0 +1,10 @@
+# FractionCore v2.0 - Villagers module configuration
+schema-version: 1
+enabled: false
+
+trade-reset-interval: 1440
+
+limits:
+  '1': 1
+  '2': 1
+  '3': 2

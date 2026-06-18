@@ -1,0 +1,14 @@
+# FractionCore v2.0 - Map module configuration
+schema-version: 1
+enabled: true
+
+render:
+  resolution: "medium"
+  radius: 5000
+
+auto-generate:
+  interval-minutes: 30
+  only-when-online: true
+
+access:
+  mode: "public"

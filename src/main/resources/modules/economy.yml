@@ -1,0 +1,15 @@
+# FractionCore v2.0 - Economy module configuration
+schema-version: 1
+enabled: true
+
+currencies:
+  default:
+    name: "Monety"
+    symbol: "$"
+    decimals: 2
+    starting-balance: 0.0
+
+bank:
+  interest-enabled: false
+  interest-interval-minutes: 1440
+  interest-rate: 0.01

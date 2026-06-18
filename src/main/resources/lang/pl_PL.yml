@@ -1,0 +1,85 @@
+# FractionCore v2.0 - Polskie tlumaczenie
+# Format: MiniMessage (<color>) + legacy (&k) -- wspierane jednoczesnie
+
+prefix:
+  info: "<dark_gray>[<aqua>Gildia<dark_gray>] <gray>"
+  error: "<dark_gray>[<red>Gildia<dark_gray>] <red>"
+  success: "<dark_gray>[<green>Gildia<dark_gray>] <green>"
+  warning: "<dark_gray>[<yellow>Gildia<dark_gray>] <yellow>"
+
+placeholders:
+  not_available: "N/A"
+
+general:
+  no_permission: "Nie masz uprawnien do tej komendy."
+  player_only: "Ta komenda jest dostepna tylko dla graczy."
+  console_only: "Ta komenda jest dostepna tylko z konsoli."
+  usage: "Uzycie: {usage}"
+  unknown_command: "Nieznana komenda. Uzyj /guild help, aby zobaczyc dostepne komendy."
+  reload_success: "Przeladowano {count} plikow jezykowych."
+  reload_error: "Wystapil blad podczas przeladowywania jezyka: {error}"
+
+guild:
+  create:
+    success: "<green>Gratulacje!</green> Stworzyles gildie <aqua>{guild}</aqua> z tagiem <yellow>[{tag}]</yellow>!"
+    error_name_taken: "Gildia o nazwie <red>{guild}</red> juz istnieje! Wybierz inna nazwe."
+    error_tag_taken: "Tag <red>[{tag}]</red> jest juz zajety!"
+    error_name_invalid: "Nazwa gildii zawiera niedozwolone znaki. Uzyj tylko liter, cyfr, spacji i podkreslnikow."
+    error_items: "<red>Brakuje ci itemow do stworzenia gildii!</red> Potrzebujesz: <yellow>{items}</yellow>"
+    error_location: "<red>Nie mozesz stworzyc gildii w tym miejscu.</red> Zbyt blisko innej gildii (min. <yellow>{radius}</yellow> blokow)."
+    error_world: "<red>Tworzenie gildii jest zabronione w tym swiecie.</red>"
+    error_cost: "<red>Nie masz wystarczajacej ilosci waluty.</red> Potrzebujesz: <yellow>{amount}</yellow>"
+  invite:
+    sent: "<green>Zaproszenie wyslane do gracza <yellow>{player}</yellow>!"
+    received: "<green>Otrzymales zaproszenie do gildii <aqua>{guild}</aqua> od <yellow>{sender}</yellow>."
+    accept_hover: "Kliknij aby dolaczyc do gildii {guild}!"
+    error_already_member: "<red>Gracz {player} jest juz czlonkiem twojej gildii!</red>"
+    error_has_guild: "<red>Gracz {player} nalezy juz do innej gildii.</red>"
+    error_self: "<red>Nie mozesz zaprosic samego siebie!</red>"
+  join:
+    success: "<green>Dolaczyles do gildii <aqua>{guild}</aqua>!"
+    broadcast: "<green>Gracz <yellow>{player}</yellow> dolaczyl do gildii!"
+    welcome: "<green>Witaj w gildii <aqua>{guild}</aqua>!"
+  leave:
+    success: "<yellow>Opusciles gildie <aqua>{guild}</aqua>."
+    broadcast: "<yellow>Gracz <red>{player}</red> opuscil gildie."
+  disband:
+    success: "<red>Gildia <aqua>{guild}</aqua> zostala rozwiazana."
+    broadcast: "<dark_red>Gildia <red>{guild}</red> przestala istniec!"
+  kick:
+    success: "<green>Wyrzuciles gracza <yellow>{player}</yellow> z gildii."
+    broadcast: "<yellow>Gracz <red>{player}</red> zostal wyrzucony z gildii."
+    error_target_higher_rank: "<red>Nie mozesz wyrzucic gracza o wyzszej lub rownej randze.</red>"
+  ban:
+    success: "<red>Zbanowales gracza <yellow>{player}</yellow> w gildii.</red>"
+    broadcast: "<red>Gracz <yellow>{player}</yellow> zostal zbanowany w gildii.</red>"
+    error_target_higher_rank: "<red>Nie mozesz zbanowac gracza o wyzszej lub rownej randze.</red>"
+    error_already_banned: "<red>Gracz {player} jest juz zbanowany w tej gildii.</red>"
+  unban:
+    success: "<green>Odbanowales gracza <yellow>{player}</yellow> w gildii."
+    error_not_banned: "<red>Gracz {player} nie jest zbanowany w tej gildii.</red>"
+  info:
+    header: "<dark_gray>=== <aqua>{guild}</aqua> <dark_gray>[<yellow>{tag}</yellow><dark_gray>] ==="
+    leader: "<gray>Lider: <aqua>{leader}</aqua>"
+    points: "<gray>Punkty: <aqua>{points}</aqua>"
+    level: "<gray>Poziom: <aqua>{level}</aqua>"
+    members: "<gray>Czlonkowie: <aqua>{members}</aqua>"
+    created: "<gray>Utworzona: <aqua>{date}</aqua>"
+  not_found: "<red>Nie znaleziono gildii.</red>"
+  no_guild: "<red>Nie nalezysz do zadnej gildii.</red>"
+  not_member: "<red>Gracz {player} nie jest czlonkiem twojej gildii.</red>"
+
+egg:
+  damaged: "<red><bold>UWAGA!</bold></red> Jajo twojej gildii zostalo uszkodzone! Pozostalo <yellow>{lives}/{max_lives}</yellow> zyc."
+  destroyed: "<dark_red><bold>OSTRZEZENIE!</bold></dark_red> Jajo gildii <aqua>{guild}</aqua> zostalo zniszczone! Gildia upadnie za <yellow>{time}</yellow>."
+  repaired: "<green>Jajo gildii zostalo naprawione!</green> Aktualny stan: <green>{lives}/{max_lives}</green>."
+  shield_activated: "<green>Aktywowano tarcze ochronna jaja gildii na <yellow>{time}</yellow>."
+  shield_expired: "<yellow>Tarcza ochronna jaja gildii wygasla.</yellow>"
+
+module:
+  reload_success: "Przeladowano modul <aqua>{module}</aqua>."
+  reload_all_success: "Przeladowano wszystkie moduly."
+  enable_success: "Wlaczono modul <aqua>{module}</aqua>."
+  disable_success: "Wylaczono modul <aqua>{module}</aqua>."
+  not_found: "Nie znaleziono modulu <red>{module}</red>."
+  disabled: "Modul <red>{module}</red> jest wylaczony w konfiguracji."

@@ -1,0 +1,34 @@
+# FractionCore v2.0 - Guild module configuration
+# Schema version: 2.0
+
+schema-version: 1
+enabled: true
+
+foundation:
+  min-name-length: 3
+  max-name-length: 32
+  min-tag-length: 2
+  max-tag-length: 6
+  default-color: "<gray>"
+  starting-radius: 16
+
+foundation-requirements:
+  min-playtime-minutes: 60
+  cooldown-minutes: 0
+
+ranks:
+  leader:
+    name: "Lider"
+    weight: 100
+  coleader:
+    name: "Co-Lider"
+    weight: 80
+  moderator:
+    name: "Moderator"
+    weight: 60
+  member:
+    name: "Czlonek"
+    weight: 40
+  recruit:
+    name: "Rekrut"
+    weight: 20

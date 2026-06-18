@@ -1,0 +1,85 @@
+# FractionCore v2.0 - English translation
+# Format: MiniMessage (<color>) + legacy (&k) -- both supported
+
+prefix:
+  info: "<dark_gray>[<aqua>Guild<dark_gray>] <gray>"
+  error: "<dark_gray>[<red>Guild<dark_gray>] <red>"
+  success: "<dark_gray>[<green>Guild<dark_gray>] <green>"
+  warning: "<dark_gray>[<yellow>Guild<dark_gray>] <yellow>"
+
+placeholders:
+  not_available: "N/A"
+
+general:
+  no_permission: "You do not have permission to use this command."
+  player_only: "This command is only available to players."
+  console_only: "This command is only available from console."
+  usage: "Usage: {usage}"
+  unknown_command: "Unknown command. Use /guild help to see available commands."
+  reload_success: "Reloaded {count} language files."
+  reload_error: "An error occurred while reloading languages: {error}"
+
+guild:
+  create:
+    success: "<green>Congratulations!</green> You created guild <aqua>{guild}</aqua> with tag <yellow>[{tag}]</yellow>!"
+    error_name_taken: "Guild <red>{guild}</red> already exists! Choose another name."
+    error_tag_taken: "Tag <red>[{tag}]</red> is already taken!"
+    error_name_invalid: "Guild name contains invalid characters. Use only letters, numbers, spaces and underscores."
+    error_items: "<red>You don't have enough items to create a guild!</red> You need: <yellow>{items}</yellow>"
+    error_location: "<red>You cannot create a guild here.</red> Too close to another guild (min. <yellow>{radius}</yellow> blocks)."
+    error_world: "<red>Guild creation is disabled in this world.</red>"
+    error_cost: "<red>You don't have enough currency.</red> You need: <yellow>{amount}</yellow>"
+  invite:
+    sent: "<green>Invitation sent to player <yellow>{player}</yellow>!"
+    received: "<green>You received an invitation to guild <aqua>{guild}</aqua> from <yellow>{sender}</yellow>."
+    accept_hover: "Click to join guild {guild}!"
+    error_already_member: "<red>Player {player} is already a member of your guild!</red>"
+    error_has_guild: "<red>Player {player} already belongs to another guild.</red>"
+    error_self: "<red>You cannot invite yourself!</red>"
+  join:
+    success: "<green>You joined guild <aqua>{guild}</aqua>!"
+    broadcast: "<green>Player <yellow>{player}</yellow> joined the guild!"
+    welcome: "<green>Welcome to guild <aqua>{guild}</aqua>!"
+  leave:
+    success: "<yellow>You left guild <aqua>{guild}</aqua>."
+    broadcast: "<yellow>Player <red>{player}</red> left the guild."
+  disband:
+    success: "<red>Guild <aqua>{guild}</aqua> has been disbanded."
+    broadcast: "<dark_red>Guild <red>{guild}</red> no longer exists!"
+  kick:
+    success: "<green>You kicked player <yellow>{player}</yellow> from the guild."
+    broadcast: "<yellow>Player <red>{player}</red> was kicked from the guild."
+    error_target_higher_rank: "<red>You cannot kick a player with higher or equal rank.</red>"
+  ban:
+    success: "<red>You banned player <yellow>{player}</yellow> from the guild.</red>"
+    broadcast: "<red>Player <yellow>{player}</yellow> was banned from the guild.</red>"
+    error_target_higher_rank: "<red>You cannot ban a player with higher or equal rank.</red>"
+    error_already_banned: "<red>Player {player} is already banned in this guild.</red>"
+  unban:
+    success: "<green>You unbanned player <yellow>{player}</yellow> from the guild."
+    error_not_banned: "<red>Player {player} is not banned in this guild.</red>"
+  info:
+    header: "<dark_gray>=== <aqua>{guild}</aqua> <dark_gray>[<yellow>{tag}</yellow><dark_gray>] ==="
+    leader: "<gray>Leader: <aqua>{leader}</aqua>"
+    points: "<gray>Points: <aqua>{points}</aqua>"
+    level: "<gray>Level: <aqua>{level}</aqua>"
+    members: "<gray>Members: <aqua>{members}</aqua>"
+    created: "<gray>Created: <aqua>{date}</aqua>"
+  not_found: "<red>Guild not found.</red>"
+  no_guild: "<red>You do not belong to any guild.</red>"
+  not_member: "<red>Player {player} is not a member of your guild.</red>"
+
+egg:
+  damaged: "<red><bold>WARNING!</bold></red> Your guild egg has been damaged! Remaining lives: <yellow>{lives}/{max_lives}</yellow>."
+  destroyed: "<dark_red><bold>ALERT!</bold></dark_red> Guild egg of <aqua>{guild}</aqua> has been destroyed! The guild will fall in <yellow>{time}</yellow>."
+  repaired: "<green>Guild egg has been repaired!</green> Current state: <green>{lives}/{max_lives}</green>."
+  shield_activated: "<green>Activated guild egg shield for <yellow>{time}</yellow>."
+  shield_expired: "<yellow>Guild egg shield has expired.</yellow>"
+
+module:
+  reload_success: "Reloaded module <aqua>{module}</aqua>."
+  reload_all_success: "Reloaded all modules."
+  enable_success: "Enabled module <aqua>{module}</aqua>."
+  disable_success: "Disabled module <aqua>{module}</aqua>."
+  not_found: "Module <red>{module}</red> not found."
+  disabled: "Module <red>{module}</red> is disabled in configuration."

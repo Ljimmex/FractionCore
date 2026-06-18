@@ -1,0 +1,17 @@
+# FractionCore v2.0 - TAB module configuration
+schema-version: 1
+enabled: true
+
+update-interval: 20
+
+header:
+  - "&8[&bFractionCore&8]"
+
+footer:
+  - "&7TPS: %server_tps%"
+
+columns:
+  left:
+    - "%player_name%"
+  right:
+    - "%guild_tag%"
