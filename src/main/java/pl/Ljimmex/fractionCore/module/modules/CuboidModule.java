@@ -24,11 +24,9 @@ public class CuboidModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Cuboid module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Cuboid module disabled.");
     }
 }

@@ -1,5 +1,9 @@
 package pl.Ljimmex.fractionCore;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.command.GuildCommand;
@@ -46,6 +50,7 @@ public final class FractionCore extends JavaPlugin {
 
         Objects.requireNonNull(getCommand("guild")).setExecutor(new GuildCommand(this, moduleManager));
 
+        printStartupBanner();
         getLogger().info("FractionCore enabled successfully.");
     }
 
@@ -84,5 +89,25 @@ public final class FractionCore extends JavaPlugin {
 
     public ModuleManager getModuleManager() {
         return moduleManager;
+    }
+
+    private void printStartupBanner() {
+        String version = getDescription().getVersion();
+        String author = getDescription().getAuthors().isEmpty() ? "Ljimex" : getDescription().getAuthors().get(0);
+
+        Component border = Component.text("+============================+").color(NamedTextColor.GOLD);
+        Component separator = Component.text("|----------------------------|").color(NamedTextColor.YELLOW);
+        Component title = MiniMessage.miniMessage().deserialize("<gradient:gold:yellow:aqua>|        FractionCore        |</gradient>").decorate(TextDecoration.BOLD);
+        Component subtitle = Component.text("| Fraction Guild Clans v2.0  |").color(NamedTextColor.GRAY);
+        Component versionLine = Component.text("|        Version " + version + "       |").color(NamedTextColor.GRAY);
+        Component authorLine = Component.text("|         by " + author + "          |").color(NamedTextColor.GRAY);
+
+        getServer().getConsoleSender().sendMessage(border);
+        getServer().getConsoleSender().sendMessage(title);
+        getServer().getConsoleSender().sendMessage(separator);
+        getServer().getConsoleSender().sendMessage(subtitle);
+        getServer().getConsoleSender().sendMessage(versionLine);
+        getServer().getConsoleSender().sendMessage(authorLine);
+        getServer().getConsoleSender().sendMessage(border);
     }
 }

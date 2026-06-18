@@ -24,11 +24,9 @@ public class MapModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Map module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Map module disabled.");
     }
 }

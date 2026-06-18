@@ -24,11 +24,9 @@ public class EggModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Egg module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Egg module disabled.");
     }
 }

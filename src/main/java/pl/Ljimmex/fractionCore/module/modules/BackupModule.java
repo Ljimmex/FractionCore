@@ -24,11 +24,9 @@ public class BackupModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Backup module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Backup module disabled.");
     }
 }

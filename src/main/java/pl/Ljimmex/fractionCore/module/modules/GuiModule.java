@@ -24,11 +24,9 @@ public class GuiModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("GUI module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("GUI module disabled.");
     }
 }

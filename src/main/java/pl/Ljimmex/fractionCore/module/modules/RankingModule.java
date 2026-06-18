@@ -24,11 +24,9 @@ public class RankingModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Ranking module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Ranking module disabled.");
     }
 }

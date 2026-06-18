@@ -21,11 +21,9 @@ public class JoinItemsModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("JoinItems module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("JoinItems module disabled.");
     }
 }

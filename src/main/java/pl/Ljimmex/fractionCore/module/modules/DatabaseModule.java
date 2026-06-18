@@ -53,7 +53,6 @@ public class DatabaseModule extends BaseModule {
             guildActivityLogDao = new GuildActivityLogDaoImpl(databaseManager);
             guildEggLogDao = new GuildEggLogDaoImpl(databaseManager);
             seasonDao = new SeasonDaoImpl(databaseManager);
-            getPlugin().getLogger().info("Database module enabled.");
         } catch (SQLException e) {
             getPlugin().getLogger().severe("Failed to connect to database: " + e.getMessage());
             throw new RuntimeException(e);
@@ -65,7 +64,6 @@ public class DatabaseModule extends BaseModule {
         if (databaseManager != null) {
             databaseManager.disconnect();
         }
-        getPlugin().getLogger().info("Database module disabled.");
     }
 
     public DatabaseManager getDatabaseManager() {

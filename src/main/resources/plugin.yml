@@ -1,14 +1,10 @@
 name: FractionCore
-description: $description
-prefix: FCG
 version: '${version}'
-
+description: '${description}'
 main: pl.Ljimmex.fractionCore.FractionCore
-loader: pl.Ljimmex.fractionCore.FractionCoreLoader
 api-version: '1.20'
 load: STARTUP
-
-authors: [ Ljimex ]
+authors: [Ljimex]
 website: https://github.com/Ljinmex/FractionCore
 
 permissions:

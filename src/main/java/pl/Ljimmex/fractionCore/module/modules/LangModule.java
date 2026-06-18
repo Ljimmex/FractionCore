@@ -28,7 +28,6 @@ public class LangModule extends BaseModule {
     @Override
     public void onDisable() {
         langManager = null;
-        getPlugin().getLogger().info("Lang module disabled.");
     }
 
     @Override

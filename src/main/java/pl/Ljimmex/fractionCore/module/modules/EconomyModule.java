@@ -21,11 +21,9 @@ public class EconomyModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Economy module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Economy module disabled.");
     }
 }

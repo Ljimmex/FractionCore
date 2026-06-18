@@ -29,11 +29,9 @@ public class VillagersModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Villagers module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Villagers module disabled.");
     }
 }

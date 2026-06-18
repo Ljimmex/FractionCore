@@ -24,11 +24,9 @@ public class TabModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("TAB module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("TAB module disabled.");
     }
 }

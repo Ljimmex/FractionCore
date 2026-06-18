@@ -29,11 +29,9 @@ public class WebhookModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Webhook module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Webhook module disabled.");
     }
 }

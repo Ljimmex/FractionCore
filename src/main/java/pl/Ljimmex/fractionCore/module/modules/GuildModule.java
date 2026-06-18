@@ -24,11 +24,9 @@ public class GuildModule extends BaseModule {
 
     @Override
     public void onEnable() {
-        getPlugin().getLogger().info("Guild module enabled.");
     }
 
     @Override
     public void onDisable() {
-        getPlugin().getLogger().info("Guild module disabled.");
     }
 }
