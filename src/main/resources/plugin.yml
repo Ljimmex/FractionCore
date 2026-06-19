@@ -8,6 +8,9 @@ authors: [Ljimex]
 website: https://github.com/Ljinmex/FractionCore
 
 permissions:
+  fractioncore.command.guild:
+    description: Allows use of the main /guild command
+    default: true
   fractioncore.admin:
     description: Allows access to admin commands
     default: op

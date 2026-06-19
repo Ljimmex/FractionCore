@@ -185,6 +185,17 @@ Each enabled module reads its dedicated file from `plugins/FractionCore/modules/
 | `/guild admin reload` | `fractioncore.admin.reload` | Reloads all configs and modules |
 | `/guild admin debug <true\|false>` | `fractioncore.admin.debug` | Toggles debug mode |
 
+### Permissions
+
+| Permission | Default | Description |
+|------------|---------|-------------|
+| `fractioncore.command.guild` | `true` | Allows use of the `/guild` command |
+| `fractioncore.admin` | `op` | Base access to `/guild admin` commands |
+| `fractioncore.admin.module` | `op` | Manage module lifecycle |
+| `fractioncore.admin.lang.reload` | `op` | Reload language files |
+| `fractioncore.admin.reload` | `op` | Reload configuration and modules |
+| `fractioncore.admin.debug` | `op` | Toggle debug mode |
+
 ---
 
 ## Building from Source
@@ -229,7 +240,7 @@ FractionCore/
 │   └── module/                    # Module system
 ├── src/main/resources/
 │   ├── config.yml
-│   ├── paper-plugin.yml
+│   ├── plugin.yml
 │   ├── lang/
 │   │   ├── pl_PL.yml
 │   │   └── en_US.yml
@@ -260,6 +271,11 @@ FractionCore/
 - Full feature specification: `docs/Fraction_Guild_Clans_v2.0_Dokumentacja.pdf`
 - Development roadmap: `docs/FGC_Roadmap_v2.pdf`
 - Interactive progress portal: `index.html`
+- Technical documentation:
+  - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
+  - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — developer setup and build guide
+  - [`docs/API.md`](docs/API.md) — public API skeleton
+  - [`docs/DATABASE.md`](docs/DATABASE.md) — database schema reference
 
 ---
 

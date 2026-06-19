@@ -92,8 +92,8 @@ public final class FractionCore extends JavaPlugin {
     }
 
     private void printStartupBanner() {
-        String version = getDescription().getVersion();
-        String author = getDescription().getAuthors().isEmpty() ? "Ljimex" : getDescription().getAuthors().get(0);
+        String version = getPluginMeta().getVersion();
+        String author = getPluginMeta().getAuthors().isEmpty() ? "Ljimex" : getPluginMeta().getAuthors().get(0);
 
         Component border = Component.text("+============================+").color(NamedTextColor.GOLD);
         Component separator = Component.text("|----------------------------|").color(NamedTextColor.YELLOW);

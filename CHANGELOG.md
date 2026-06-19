@@ -18,7 +18,7 @@ Initial infrastructure release for the Fraction Guild Clans v2.0 ecosystem. This
 - Gradle project with Kotlin DSL build scripts.
 - Java 21 toolchain and Paper API 1.20.6 dependency.
 - Server compatibility range: **1.20.x – 1.21.11**.
-- `paper-plugin.yml` metadata, command registration, and permission definitions.
+- `plugin.yml` metadata, command registration, and permission definitions.
 - Local development server via `run-paper` plugin.
 - Self-contained fat-jar packaging (HikariCP, SQLite, MySQL, PostgreSQL drivers).
 
@@ -26,6 +26,7 @@ Initial infrastructure release for the Fraction Guild Clans v2.0 ecosystem. This
 - `ModuleManager` with topological dependency resolution.
 - 14 registered modules: `guild`, `cuboid`, `egg`, `economy`, `ranking`, `gui`, `tab`, `map`, `villagers`, `join_items`, `lang`, `database`, `backup`, `webhook`.
 - Administrative command: `/guild admin module <list|enable|disable|reload> [module]`.
+- Dedicated `GuildAdminCommand` handler for all `/guild admin ...` subcommands.
 - Runtime module enable/disable through `config.yml` without server restart.
 
 #### Task 0.3 — Database Layer
@@ -57,6 +58,7 @@ Initial infrastructure release for the Fraction Guild Clans v2.0 ecosystem. This
 ### Changed
 - Adjusted server compatibility from `1.8–1.21.11` to `1.20.x–1.21.11`.
 - Replaced Shadow plugin fat-jar configuration with direct `tasks.jar` packaging to resolve ASM processing errors.
+- Admin subcommands (`module`, `lang`, `reload`, `debug`) moved from `GuildCommand` to `GuildAdminCommand`.
 
 ### Removed
 - Redundant `/guild lang <code>` and `/guild setlang <key> <value>` commands.

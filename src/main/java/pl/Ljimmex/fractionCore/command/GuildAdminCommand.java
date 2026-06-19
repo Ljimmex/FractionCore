@@ -7,9 +7,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import pl.Ljimmex.fractionCore.config.DebugManager;
 import pl.Ljimmex.fractionCore.module.BaseModule;
 import pl.Ljimmex.fractionCore.module.ModuleManager;
 import pl.Ljimmex.fractionCore.module.ModuleState;
+import pl.Ljimmex.fractionCore.module.modules.LangModule;
 
 public class GuildAdminCommand implements CommandExecutor {
 
@@ -23,56 +25,140 @@ public class GuildAdminCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!sender.hasPermission("fractioncore.admin")) {
+            sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendAdminUsage(sender);
+            return true;
+        }
+
+        String adminSub = args[0].toLowerCase();
+
+        switch (adminSub) {
+            case "module":
+                return handleAdminModule(sender, args);
+            case "lang":
+                return handleAdminLang(sender, args);
+            case "reload":
+                return handleAdminReload(sender);
+            case "debug":
+                return handleAdminDebug(sender, args);
+            default:
+                sendAdminUsage(sender);
+                return true;
+        }
+    }
+
+    private boolean handleAdminModule(CommandSender sender, String[] args) {
         if (!sender.hasPermission("fractioncore.admin.module")) {
             sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
             return true;
         }
 
-        if (args.length < 2 || !args[0].equalsIgnoreCase("admin") || !args[1].equalsIgnoreCase("module")) {
-            sendUsage(sender);
+        if (args.length < 2) {
+            sendModuleUsage(sender);
             return true;
         }
 
-        if (args.length == 2) {
-            sendUsage(sender);
-            return true;
-        }
-
-        String subCommand = args[2].toLowerCase();
+        String subCommand = args[1].toLowerCase();
 
         switch (subCommand) {
             case "list":
                 sendModuleList(sender);
                 return true;
             case "enable":
-                if (args.length < 4) {
+                if (args.length < 3) {
                     sender.sendMessage(Component.text("Uzycie: /guild admin module enable <modul>").color(NamedTextColor.RED));
                     return true;
                 }
-                handleEnable(sender, args[3]);
+                handleEnable(sender, args[2]);
                 return true;
             case "disable":
-                if (args.length < 4) {
+                if (args.length < 3) {
                     sender.sendMessage(Component.text("Uzycie: /guild admin module disable <modul>").color(NamedTextColor.RED));
                     return true;
                 }
-                handleDisable(sender, args[3]);
+                handleDisable(sender, args[2]);
                 return true;
             case "reload":
-                if (args.length < 4) {
+                if (args.length < 3) {
                     moduleManager.reloadAllModules();
                     sender.sendMessage(Component.text("Przeladowano wszystkie moduly.").color(NamedTextColor.GREEN));
                 } else {
-                    handleReload(sender, args[3]);
+                    handleReload(sender, args[2]);
                 }
                 return true;
             default:
-                sendUsage(sender);
+                sendModuleUsage(sender);
                 return true;
         }
     }
 
-    private void sendUsage(CommandSender sender) {
+    private boolean handleAdminLang(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("fractioncore.admin.lang.reload")) {
+            sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        if (args.length < 3 || !args[1].equalsIgnoreCase("reload")) {
+            sender.sendMessage(Component.text("Uzycie: /guild admin lang reload").color(NamedTextColor.YELLOW));
+            return true;
+        }
+
+        LangModule langModule = getLangModule();
+        if (langModule == null) {
+            sender.sendMessage(Component.text("Modul jezykowy nie jest aktywny.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        langModule.getLangManager().reload();
+        sender.sendMessage(Component.text("Przeladowano pliki jezykowe.").color(NamedTextColor.GREEN));
+        return true;
+    }
+
+    private boolean handleAdminReload(CommandSender sender) {
+        if (!sender.hasPermission("fractioncore.admin.reload")) {
+            sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        plugin.reloadConfig();
+        ((pl.Ljimmex.fractionCore.FractionCore) plugin).getConfigManager().reload();
+        moduleManager.reloadAllModules();
+        sender.sendMessage(Component.text("Przeladowano wszystkie pliki konfiguracyjne i moduly.").color(NamedTextColor.GREEN));
+        return true;
+    }
+
+    private boolean handleAdminDebug(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("fractioncore.admin.debug")) {
+            sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild admin debug <true|false>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+
+        boolean enabled = Boolean.parseBoolean(args[1]);
+        DebugManager debugManager = ((pl.Ljimmex.fractionCore.FractionCore) plugin).getDebugManager();
+        debugManager.setDebugEnabled(enabled);
+        sender.sendMessage(Component.text("Tryb debug: " + (enabled ? "wlaczony" : "wylaczony")).color(NamedTextColor.GREEN));
+        return true;
+    }
+
+    private void sendAdminUsage(CommandSender sender) {
+        sender.sendMessage(Component.text("=== ADMIN FRACTIONCORE ===").color(NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("/guild admin module <list|enable|disable|reload> [modul]").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild admin lang reload - przeladowanie jezykow").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild admin reload - przeladowanie konfiguracji").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild admin debug <true|false> - tryb debug").color(NamedTextColor.YELLOW));
+    }
+
+    private void sendModuleUsage(CommandSender sender) {
         sender.sendMessage(Component.text("Uzycie: /guild admin module <list|enable|disable|reload> [modul]").color(NamedTextColor.YELLOW));
     }
 
@@ -108,5 +194,10 @@ public class GuildAdminCommand implements CommandExecutor {
         } else {
             sender.sendMessage(Component.text("Nie udalo sie przeladowac modulu '" + name + "'.").color(NamedTextColor.RED));
         }
+    }
+
+    private LangModule getLangModule() {
+        BaseModule module = moduleManager.getModule("lang");
+        return module instanceof LangModule ? (LangModule) module : null;
     }
 }
