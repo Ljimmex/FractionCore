@@ -7,6 +7,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +16,7 @@ import java.util.logging.Level;
 
 public class ConfigManager {
 
-    private static final int CURRENT_SCHEMA_VERSION = 1;
+    private static final int CURRENT_SCHEMA_VERSION = 2;
 
     private final JavaPlugin plugin;
     private final File modulesDirectory;
@@ -42,7 +44,6 @@ public class ConfigManager {
         loadModuleConfig("tab.yml");
         loadModuleConfig("map.yml");
         loadModuleConfig("villagers.yml");
-        loadModuleConfig("join_items.yml");
         loadModuleConfig("backup.yml");
         loadModuleConfig("webhook.yml");
     }
@@ -72,6 +73,10 @@ public class ConfigManager {
             setDefault(config, "general.language", "pl_PL");
             setDefault(config, "general.debug", false);
             setDefault(config, "general.prefix", "<dark_gray>[<aqua>FGC<dark_gray>] <gray>");
+            setDefault(config, "general.custom-join-message.enabled", true);
+            setDefault(config, "general.custom-join-message.format", "<dark_gray>[<green><bold>+</bold></green>] <gray>{player}");
+            setDefault(config, "general.custom-quit-message.enabled", true);
+            setDefault(config, "general.custom-quit-message.format", "<dark_gray>[<red><bold>-</bold></red>] <gray>{player}");
             setDefault(config, "lang.default", "pl_PL");
 
             if (!config.contains("modules")) {
@@ -84,7 +89,6 @@ public class ConfigManager {
                 setDefault(config, "modules.tab.enabled", true);
                 setDefault(config, "modules.map.enabled", true);
                 setDefault(config, "modules.villagers.enabled", false);
-                setDefault(config, "modules.join_items.enabled", false);
                 setDefault(config, "modules.lang.enabled", true);
                 setDefault(config, "modules.database.enabled", true);
                 setDefault(config, "modules.backup.enabled", true);
@@ -128,6 +132,10 @@ public class ConfigManager {
         }
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+        FileConfiguration defaults = mergeModuleDefaults(fileName, file, config);
+        if ("guild.yml".equals(fileName)) {
+            migrateGuildChatFormat(config, defaults, file);
+        }
         moduleConfigs.put(fileName, config);
         return config;
     }
@@ -141,6 +149,48 @@ public class ConfigManager {
             }
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save default module config " + fileName, e);
+        }
+    }
+
+    private FileConfiguration mergeModuleDefaults(String fileName, File file, FileConfiguration config) {
+        FileConfiguration defaults = null;
+        try (InputStream inputStream = plugin.getResource("modules/" + fileName)) {
+            if (inputStream == null) {
+                return new YamlConfiguration();
+            }
+            defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            boolean changed = false;
+            for (String key : defaults.getKeys(true)) {
+                if (defaults.isConfigurationSection(key)) {
+                    continue;
+                }
+                if (!config.contains(key)) {
+                    config.set(key, defaults.get(key));
+                    changed = true;
+                }
+            }
+            if (changed) {
+                config.save(file);
+                plugin.getLogger().info("Updated module config with missing keys: " + fileName);
+            }
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to merge defaults for module config " + fileName, e);
+        }
+        return defaults != null ? defaults : new YamlConfiguration();
+    }
+
+    private void migrateGuildChatFormat(FileConfiguration config, FileConfiguration defaults, File file) {
+        String format = config.getString("chat.format", "");
+        if (format.contains("{rank}") || format.contains("<yellow>[{rank_letter}]</yellow>")) {
+            String newFormat = defaults.getString("chat.format",
+                    "<dark_gray>[<aqua>{tag}</aqua>]{rank_letter} <white>{player}<gray>: ");
+            config.set("chat.format", newFormat);
+            try {
+                config.save(file);
+                plugin.getLogger().info("Migrated guild chat format to the new version (removed {rank} placeholder).");
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to migrate guild chat format", e);
+            }
         }
     }
 

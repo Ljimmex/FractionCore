@@ -17,7 +17,7 @@
 
 ---
 
-> ⚠️ **Development Preview v0.0.1**
+> ⚠️ **Development Preview v0.0.2**
 >
 > This release delivers the foundational infrastructure for Fraction Guild Clans v2.0 (Sprint 0). Core gameplay systems — guild creation, cuboid protection, guild eggs, economy, ranking, GUI, and map rendering — are scheduled for subsequent releases.
 
@@ -214,7 +214,7 @@ Each enabled module reads its dedicated file from `plugins/FractionCore/modules/
 The compiled JAR will be available at:
 
 ```
-build/libs/FractionCore-0.0.1.jar
+build/libs/FractionCore-0.0.2.jar
 ```
 
 ### Development Server

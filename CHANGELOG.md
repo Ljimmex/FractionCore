@@ -6,6 +6,61 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 
 ---
 
+## [0.0.2] - 2026-06-18
+
+### Added
+
+#### Task 1.1 — Guild Entities and DAOs
+- `GuildRank` enum: `LEADER`, `CO_LEADER`, `MODERATOR`, `MEMBER`, `RECRUIT`.
+- `GuildMember` entity: `uuid`, `name`, `rank`, `joinedAt`.
+- Extended `Guild` entity with `color` and `members` list.
+- `GuildDao` CRUD implementation with member loading from the `players` table.
+- `PlayerDao` mapping for `GuildRank` and player stats (kills, deaths, assists, points, guild membership).
+- Database migration v2 adding the `color` column to `guilds`.
+
+#### Task 1.2 — Guild Creation
+- `/guild create <name> <tag> [color]` command with preview and `/guild create confirm` step.
+- Configurable validation for guild name (3–24 chars) and tag (2–6 alphanumeric).
+- Uniqueness checks for name and tag via `GuildDao`.
+- Foundation item cost validation, preview and deduction from player inventory.
+- Foundation requirements: leave cooldown, max guilds per player, blocked worlds.
+- Location validation: blocked worlds, minimum distance from spawn, minimum distance from other guilds.
+- Automatic creation of the guild record, founder as `LEADER`, and guild home location.
+- Automatic generation of the starting cuboid via `CuboidDao`.
+- Teleportation of the founder to the guild center.
+- 6x6x6 empty cube generation around the guild egg at Y=20 with the egg in the center.
+- Optional global broadcast announcement on guild creation.
+- `GuildService` orchestrating the entire creation flow.
+- `GuildTagManager` adding the guild tag before the player name in chat and above the head.
+- `GuildJoinListener` restoring the guild tag on player join.
+- Database migration v3 adding guild home columns and `players.left_guild_at`.
+
+#### Task 1.3 — Guild Member Management
+- Database migration v4 adding the `guild_invites` table (guild, player, invited_by, timestamps, expiry).
+- `GuildInvite` entity and `GuildInviteDao`/`GuildInviteDaoImpl` for persistent invitation storage.
+- `/guild invite <nick>` command with rank check (Moderator+), member limit, invite limit, and ban checks.
+- `/guild invite cancel` command to cancel all pending invitations from the sender's guild.
+- `/guild invite decline <tag>` command for invited players to decline an invitation.
+- `/guild join <tag>` command to accept an invitation, including cooldown, ban, and guild-membership validation.
+- Optional configurable item cost for joining a guild (`member-management.join-cost` in `modules/guild.yml`).
+- `/guild leave` command with leader-leave protection.
+- `/guild kick <nick>` command with rank hierarchy validation.
+- `/guild promote <nick>` and `/guild demote <nick>` commands respecting rank weights.
+- `/guild leader <nick>` command for transferring guild leadership.
+- `/guild ban <nick> [reason]`, `/guild unban <nick>` and `/guild banlist` commands using the existing `guild_bans` table.
+- `/guild info [tag]` command displaying guild name, tag, leader, points, level, member count, and creation date.
+- Guild-wide broadcast messages for joins, leaves, kicks, promotions, demotions, leadership transfers, bans, and unbans.
+- `GuildChatListener` adding the guild tag and rank to chat messages via configurable `chat.format` in `modules/guild.yml`.
+- Promote/demote success messages now show both the old and the new rank.
+- Scoreboard tag updates/clears for affected players.
+- Join cost moved from separate `join_items` module into `modules/guild.yml` (`member-management.join-cost`); `JoinItemsModule` and `modules/join_items.yml` removed.
+- `ConfigManager` now merges missing module config keys from JAR defaults, so new options (e.g. `member-management`) appear automatically in existing server configs.
+- Cooldown after leaving a guild before joining a new one is fully configurable via `member-management.cooldown-minutes-after-leave` (default 1440 minutes = 24h).
+- New permission nodes: `guild.user.invite|join|leave|kick|promote|demote|leader|ban|unban` (default `true`).
+- New language keys in `pl_PL.yml` and `en_US.yml` for all member-management messages.
+
+---
+
 ## [0.0.1] - 2026-06-18
 
 ### Overview

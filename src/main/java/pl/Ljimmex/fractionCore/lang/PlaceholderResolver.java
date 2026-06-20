@@ -19,6 +19,11 @@ public final class PlaceholderResolver {
 
         String result = message;
 
+        // Custom placeholders first so command-provided values override defaults.
+        for (Map.Entry<String, Object> entry : context.getPlaceholders().entrySet()) {
+            result = replace(result, entry.getKey(), entry.getValue() != null ? entry.getValue().toString() : NOT_AVAILABLE);
+        }
+
         Player player = context.getPlayer();
         Guild guild = context.getGuild();
 
@@ -30,10 +35,6 @@ public final class PlaceholderResolver {
         result = replace(result, "points", guild != null ? String.valueOf(guild.getPoints()) : NOT_AVAILABLE);
         result = replace(result, "level", guild != null ? String.valueOf(guild.getLevel()) : NOT_AVAILABLE);
         result = replace(result, "members", guild != null ? String.valueOf(guild.getPoints()) : NOT_AVAILABLE);
-
-        for (Map.Entry<String, Object> entry : context.getPlaceholders().entrySet()) {
-            result = replace(result, entry.getKey(), entry.getValue() != null ? entry.getValue().toString() : NOT_AVAILABLE);
-        }
 
         return result;
     }

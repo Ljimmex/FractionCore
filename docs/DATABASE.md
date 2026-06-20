@@ -32,10 +32,15 @@ Core guild data.
 | `id` | VARCHAR(36) | Guild UUID (primary key) |
 | `name` | VARCHAR(64) | Full guild name |
 | `tag` | VARCHAR(16) | Short guild tag |
+| `color` | VARCHAR(32) | Guild tag color (MiniMessage tag or legacy code) |
 | `leader_uuid` | VARCHAR(36) | UUID of the guild leader |
 | `points` | INTEGER | Ranking points |
 | `level` | INTEGER | Guild level |
 | `created_at` | INTEGER | Unix timestamp |
+| `home_world` | VARCHAR(64) | Guild home world name |
+| `home_x` | DOUBLE | Guild home X coordinate |
+| `home_y` | DOUBLE | Guild home Y coordinate |
+| `home_z` | DOUBLE | Guild home Z coordinate |
 
 ### `players`
 
@@ -46,12 +51,13 @@ Player data and guild membership.
 | `uuid` | VARCHAR(36) | Player UUID (primary key) |
 | `name` | VARCHAR(32) | Player name |
 | `guild_id` | VARCHAR(36) | Guild UUID (nullable) |
-| `rank` | VARCHAR(32) | Guild rank |
+| `rank` | VARCHAR(32) | Guild rank (`GuildRank.name()`, e.g. `LEADER`) |
 | `kills` | INTEGER | Kill count |
 | `deaths` | INTEGER | Death count |
 | `assists` | INTEGER | Assist count |
 | `points` | INTEGER | Player points |
 | `joined_guild_at` | INTEGER | Unix timestamp |
+| `left_guild_at` | INTEGER | Unix timestamp of last guild leave |
 
 ### `cuboids`
 
@@ -159,6 +165,8 @@ Migrations are defined in `MigrationManager`. Each migration has a version numbe
 | Version | Description |
 |---------|-------------|
 | 1 | Initial schema — all core tables |
+| 2 | Add `color` column to `guilds` |
+| 3 | Add `home_*` columns to `guilds` and `left_guild_at` to `players` |
 
 ## Configuration
 

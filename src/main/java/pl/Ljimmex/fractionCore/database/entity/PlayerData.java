@@ -7,17 +7,18 @@ public class PlayerData {
     private UUID uuid;
     private String name;
     private UUID guildId;
-    private String rank;
+    private GuildRank rank;
     private int kills;
     private int deaths;
     private int assists;
     private int points;
     private long joinedGuildAt;
+    private long leftGuildAt;
 
     public PlayerData() {
     }
 
-    public PlayerData(UUID uuid, String name, UUID guildId, String rank, int kills, int deaths, int assists, int points, long joinedGuildAt) {
+    public PlayerData(UUID uuid, String name, UUID guildId, GuildRank rank, int kills, int deaths, int assists, int points, long joinedGuildAt, long leftGuildAt) {
         this.uuid = uuid;
         this.name = name;
         this.guildId = guildId;
@@ -27,6 +28,7 @@ public class PlayerData {
         this.assists = assists;
         this.points = points;
         this.joinedGuildAt = joinedGuildAt;
+        this.leftGuildAt = leftGuildAt;
     }
 
     public UUID getUuid() {
@@ -53,11 +55,11 @@ public class PlayerData {
         this.guildId = guildId;
     }
 
-    public String getRank() {
+    public GuildRank getRank() {
         return rank;
     }
 
-    public void setRank(String rank) {
+    public void setRank(GuildRank rank) {
         this.rank = rank;
     }
 
@@ -99,5 +101,13 @@ public class PlayerData {
 
     public void setJoinedGuildAt(long joinedGuildAt) {
         this.joinedGuildAt = joinedGuildAt;
+    }
+
+    public long getLeftGuildAt() {
+        return leftGuildAt;
+    }
+
+    public void setLeftGuildAt(long leftGuildAt) {
+        this.leftGuildAt = leftGuildAt;
     }
 }

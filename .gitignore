@@ -19,3 +19,6 @@ hs_err_pid*
 
 # Common working directory
 run
+
+# Python virtual environments used for local tooling
+.venv/

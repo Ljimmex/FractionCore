@@ -9,6 +9,8 @@ import pl.Ljimmex.fractionCore.database.dao.GuildActivityLogDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildInviteDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDaoImpl;
@@ -27,6 +29,7 @@ public class DatabaseModule extends BaseModule {
     private PlayerDao playerDao;
     private CuboidDao cuboidDao;
     private GuildBanDao guildBanDao;
+    private GuildInviteDao guildInviteDao;
     private GuildActivityLogDao guildActivityLogDao;
     private GuildEggLogDao guildEggLogDao;
     private SeasonDao seasonDao;
@@ -46,10 +49,11 @@ public class DatabaseModule extends BaseModule {
         databaseManager.loadConfiguration(getPlugin().getConfig());
         try {
             databaseManager.connect();
-            guildDao = new GuildDaoImpl(databaseManager);
             playerDao = new PlayerDaoImpl(databaseManager);
+            guildDao = new GuildDaoImpl(databaseManager);
             cuboidDao = new CuboidDaoImpl(databaseManager);
             guildBanDao = new GuildBanDaoImpl(databaseManager);
+            guildInviteDao = new GuildInviteDaoImpl(databaseManager);
             guildActivityLogDao = new GuildActivityLogDaoImpl(databaseManager);
             guildEggLogDao = new GuildEggLogDaoImpl(databaseManager);
             seasonDao = new SeasonDaoImpl(databaseManager);
@@ -84,6 +88,10 @@ public class DatabaseModule extends BaseModule {
 
     public GuildBanDao getGuildBanDao() {
         return guildBanDao;
+    }
+
+    public GuildInviteDao getGuildInviteDao() {
+        return guildInviteDao;
     }
 
     public GuildActivityLogDao getGuildActivityLogDao() {

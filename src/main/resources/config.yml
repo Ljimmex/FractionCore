@@ -2,10 +2,16 @@
 
 # General settings
 general:
-  version: 1
+  version: 2
   language: pl_PL
   debug: false
   prefix: "<dark_gray>[<aqua>FGC<dark_gray>] <gray>"
+  custom-join-message:
+    enabled: true
+    format: "<dark_gray>[<green><bold>+</bold></green>] <gray>{player}"
+  custom-quit-message:
+    enabled: true
+    format: "<dark_gray>[<red><bold>-</bold></red>] <gray>{player}"
 
 # Language settings
 lang:
@@ -54,8 +60,6 @@ modules:
   map:
     enabled: true
   villagers:
-    enabled: false
-  join_items:
     enabled: false
   lang:
     enabled: true

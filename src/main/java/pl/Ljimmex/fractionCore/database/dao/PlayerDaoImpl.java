@@ -1,6 +1,7 @@
 package pl.Ljimmex.fractionCore.database.dao;
 
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
+import pl.Ljimmex.fractionCore.database.entity.GuildRank;
 import pl.Ljimmex.fractionCore.database.entity.PlayerData;
 
 import java.sql.Connection;
@@ -22,36 +23,38 @@ public class PlayerDaoImpl implements PlayerDao {
 
     @Override
     public void save(PlayerData player) throws SQLException {
-        String sql = "INSERT INTO players (uuid, name, guild_id, rank, kills, deaths, assists, points, joined_guild_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO players (uuid, name, guild_id, rank, kills, deaths, assists, points, joined_guild_at, left_guild_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, player.getUuid().toString());
             statement.setString(2, player.getName());
             statement.setString(3, player.getGuildId() != null ? player.getGuildId().toString() : null);
-            statement.setString(4, player.getRank());
+            statement.setString(4, player.getRank() != null ? player.getRank().name() : null);
             statement.setInt(5, player.getKills());
             statement.setInt(6, player.getDeaths());
             statement.setInt(7, player.getAssists());
             statement.setInt(8, player.getPoints());
             statement.setLong(9, player.getJoinedGuildAt());
+            statement.setLong(10, player.getLeftGuildAt());
             statement.executeUpdate();
         }
     }
 
     @Override
     public void update(PlayerData player) throws SQLException {
-        String sql = "UPDATE players SET name = ?, guild_id = ?, rank = ?, kills = ?, deaths = ?, assists = ?, points = ?, joined_guild_at = ? WHERE uuid = ?";
+        String sql = "UPDATE players SET name = ?, guild_id = ?, rank = ?, kills = ?, deaths = ?, assists = ?, points = ?, joined_guild_at = ?, left_guild_at = ? WHERE uuid = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, player.getName());
             statement.setString(2, player.getGuildId() != null ? player.getGuildId().toString() : null);
-            statement.setString(3, player.getRank());
+            statement.setString(3, player.getRank() != null ? player.getRank().name() : null);
             statement.setInt(4, player.getKills());
             statement.setInt(5, player.getDeaths());
             statement.setInt(6, player.getAssists());
             statement.setInt(7, player.getPoints());
             statement.setLong(8, player.getJoinedGuildAt());
-            statement.setString(9, player.getUuid().toString());
+            statement.setLong(9, player.getLeftGuildAt());
+            statement.setString(10, player.getUuid().toString());
             statement.executeUpdate();
         }
     }
@@ -128,16 +131,25 @@ public class PlayerDaoImpl implements PlayerDao {
 
     private PlayerData mapResultSet(ResultSet resultSet) throws SQLException {
         String guildIdStr = resultSet.getString("guild_id");
+        String rankStr = resultSet.getString("rank");
+        GuildRank rank = null;
+        if (rankStr != null) {
+            try {
+                rank = GuildRank.valueOf(rankStr);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
         return new PlayerData(
                 UUID.fromString(resultSet.getString("uuid")),
                 resultSet.getString("name"),
                 guildIdStr != null ? UUID.fromString(guildIdStr) : null,
-                resultSet.getString("rank"),
+                rank,
                 resultSet.getInt("kills"),
                 resultSet.getInt("deaths"),
                 resultSet.getInt("assists"),
                 resultSet.getInt("points"),
-                resultSet.getLong("joined_guild_at")
+                resultSet.getLong("joined_guild_at"),
+                resultSet.getLong("left_guild_at")
         );
     }
 }

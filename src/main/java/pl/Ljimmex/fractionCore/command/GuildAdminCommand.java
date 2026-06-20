@@ -2,10 +2,15 @@ package pl.Ljimmex.fractionCore.command;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import pl.Ljimmex.fractionCore.config.DebugManager;
 import pl.Ljimmex.fractionCore.module.BaseModule;
@@ -13,7 +18,7 @@ import pl.Ljimmex.fractionCore.module.ModuleManager;
 import pl.Ljimmex.fractionCore.module.ModuleState;
 import pl.Ljimmex.fractionCore.module.modules.LangModule;
 
-public class GuildAdminCommand implements CommandExecutor {
+public class GuildAdminCommand implements CommandExecutor, TabCompleter {
 
     private final JavaPlugin plugin;
     private final ModuleManager moduleManager;
@@ -46,6 +51,8 @@ public class GuildAdminCommand implements CommandExecutor {
                 return handleAdminReload(sender);
             case "debug":
                 return handleAdminDebug(sender, args);
+            case "plugin":
+                return handleAdminPlugin(sender, args);
             default:
                 sendAdminUsage(sender);
                 return true;
@@ -103,8 +110,8 @@ public class GuildAdminCommand implements CommandExecutor {
             return true;
         }
 
-        if (args.length < 3 || !args[1].equalsIgnoreCase("reload")) {
-            sender.sendMessage(Component.text("Uzycie: /guild admin lang reload").color(NamedTextColor.YELLOW));
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild admin lang <reload|reset>").color(NamedTextColor.YELLOW));
             return true;
         }
 
@@ -114,8 +121,20 @@ public class GuildAdminCommand implements CommandExecutor {
             return true;
         }
 
-        langModule.getLangManager().reload();
-        sender.sendMessage(Component.text("Przeladowano pliki jezykowe.").color(NamedTextColor.GREEN));
+        String sub = args[1].toLowerCase();
+        if (sub.equals("reload")) {
+            langModule.getLangManager().reload();
+            sender.sendMessage(Component.text("Przeladowano pliki jezykowe.").color(NamedTextColor.GREEN));
+            return true;
+        }
+
+        if (sub.equals("reset")) {
+            langModule.getLangManager().resetLanguages();
+            sender.sendMessage(Component.text("Zresetowano pliki jezykowe do domyslnych.").color(NamedTextColor.GREEN));
+            return true;
+        }
+
+        sender.sendMessage(Component.text("Uzycie: /guild admin lang <reload|reset>").color(NamedTextColor.YELLOW));
         return true;
     }
 
@@ -153,9 +172,10 @@ public class GuildAdminCommand implements CommandExecutor {
     private void sendAdminUsage(CommandSender sender) {
         sender.sendMessage(Component.text("=== ADMIN FRACTIONCORE ===").color(NamedTextColor.GOLD));
         sender.sendMessage(Component.text("/guild admin module <list|enable|disable|reload> [modul]").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild admin lang reload - przeladowanie jezykow").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild admin lang <reload|reset> - przeladowanie / reset jezykow").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild admin reload - przeladowanie konfiguracji").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild admin debug <true|false> - tryb debug").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild admin plugin reload - przeladowanie pluginu (wymaga PlugMan)").color(NamedTextColor.YELLOW));
     }
 
     private void sendModuleUsage(CommandSender sender) {
@@ -196,8 +216,77 @@ public class GuildAdminCommand implements CommandExecutor {
         }
     }
 
+    private boolean handleAdminPlugin(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("fractioncore.admin.plugin.reload")) {
+            sender.sendMessage(Component.text("Brak uprawnien.").color(NamedTextColor.RED));
+            return true;
+        }
+
+        if (args.length < 2 || !args[1].equalsIgnoreCase("reload")) {
+            sender.sendMessage(Component.text("Uzycie: /guild admin plugin reload").color(NamedTextColor.YELLOW));
+            return true;
+        }
+
+        Plugin plugMan = Bukkit.getPluginManager().getPlugin("PlugMan");
+        if (plugMan == null || !plugMan.isEnabled()) {
+            sender.sendMessage(Component.text("Aby przeladowac plugin bez restartu, zainstaluj PlugMan (lub podobny plugin-manager).").color(NamedTextColor.RED));
+            return true;
+        }
+
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "plugman reload FractionCore");
+        sender.sendMessage(Component.text("Przeladowano plugin FractionCore za pomoca PlugMan.").color(NamedTextColor.GREEN));
+        return true;
+    }
+
     private LangModule getLangModule() {
         BaseModule module = moduleManager.getModule("lang");
         return module instanceof LangModule ? (LangModule) module : null;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!sender.hasPermission("fractioncore.admin")) {
+            return List.of();
+        }
+
+        if (args.length == 1) {
+            return filter(List.of("module", "lang", "reload", "debug", "plugin"), args[0]);
+        }
+
+        String sub = args[0].toLowerCase();
+        switch (sub) {
+            case "module" -> {
+                if (args.length == 2) {
+                    return filter(List.of("list", "enable", "disable", "reload"), args[1]);
+                }
+                if (args.length == 3 && (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("reload"))) {
+                    return filter(moduleManager.getModules().stream().map(BaseModule::getName).toList(), args[2]);
+                }
+            }
+            case "lang" -> {
+                if (args.length == 2) {
+                    return filter(List.of("reload", "reset"), args[1]);
+                }
+            }
+            case "debug" -> {
+                if (args.length == 2) {
+                    return filter(List.of("true", "false"), args[1]);
+                }
+            }
+            case "plugin" -> {
+                if (args.length == 2) {
+                    return filter(List.of("reload"), args[1]);
+                }
+            }
+        }
+
+        return List.of();
+    }
+
+    private List<String> filter(List<String> options, String prefix) {
+        String lower = prefix.toLowerCase();
+        return options.stream()
+                .filter(option -> option.toLowerCase().startsWith(lower))
+                .toList();
     }
 }

@@ -11,6 +11,46 @@ permissions:
   fractioncore.command.guild:
     description: Allows use of the main /guild command
     default: true
+  guild.user.*:
+    description: All default guild member commands
+    default: true
+    children:
+      guild.user.invite: true
+      guild.user.join: true
+      guild.user.leave: true
+      guild.user.kick: true
+      guild.user.promote: true
+      guild.user.demote: true
+      guild.user.leader: true
+      guild.user.ban: true
+      guild.user.unban: true
+  guild.user.invite:
+    description: Allows inviting players to the guild
+    default: true
+  guild.user.join:
+    description: Allows accepting guild invitations
+    default: true
+  guild.user.leave:
+    description: Allows leaving the guild
+    default: true
+  guild.user.kick:
+    description: Allows kicking guild members
+    default: true
+  guild.user.promote:
+    description: Allows promoting guild members
+    default: true
+  guild.user.demote:
+    description: Allows demoting guild members
+    default: true
+  guild.user.leader:
+    description: Allows transferring guild leadership
+    default: true
+  guild.user.ban:
+    description: Allows banning players from the guild
+    default: true
+  guild.user.unban:
+    description: Allows unbanning players from the guild
+    default: true
   fractioncore.admin:
     description: Allows access to admin commands
     default: op

@@ -6,15 +6,34 @@ enabled: true
 
 foundation:
   min-name-length: 3
-  max-name-length: 32
+  max-name-length: 24
   min-tag-length: 2
   max-tag-length: 6
+  name-pattern: "[A-Za-z0-9_ ]+"
+  tag-pattern: "[A-Za-z0-9]+"
   default-color: "<gray>"
   starting-radius: 16
+  min-distance-from-spawn: 200
+  min-distance-between-guilds: 5
+  announce-globally: true
+  egg-block: DRAGON_EGG
+  egg-center-y: 20
+
+foundation-cost:
+  items:
+    - material: DIAMOND_BLOCK
+      amount: 16
+    - material: EMERALD_BLOCK
+      amount: 8
+    - material: NETHERITE_INGOT
+      amount: 4
 
 foundation-requirements:
-  min-playtime-minutes: 60
-  cooldown-minutes: 0
+  cooldown-minutes: 2880
+  max-guilds-per-player: 1
+  blocked-worlds:
+    - "world_spawn"
+    - "world_arena"
 
 ranks:
   leader:
@@ -32,3 +51,40 @@ ranks:
   recruit:
     name: "Rekrut"
     weight: 20
+
+member-management:
+  # Max guild members (can be increased by cuboid levels / VIP permissions in the future)
+  max-members: 10
+  # How long an invite stays valid (in minutes)
+  invite-timeout-minutes: 10
+  # Max pending invites sent by one guild at a time
+  max-invites-per-guild: 5
+  # Cooldown after leaving a guild before joining a new one (in minutes)
+  cooldown-minutes-after-leave: 1440
+  # Optional one-time item cost for joining a guild via invitation
+  join-cost:
+    enabled: false
+    items:
+      - material: DIAMOND
+        amount: 16
+
+# Guild chat formatting
+chat:
+  enabled: true
+  # Available placeholders: {tag}, {guild}, {rank_letter}, {player}
+  # The actual chat message is appended after this prefix.
+  format: "<dark_gray>[<aqua>{tag}</aqua>]{rank_letter} <white>{player}<gray>: "
+  # One-letter abbreviation shown next to the guild tag.
+  rank-letters:
+    leader: "L"
+    coleader: "Z"
+    moderator: "M"
+    member: "C"
+    recruit: "R"
+  # MiniMessage color of the rank letter (to distinguish it from the tag).
+  rank-letter-colors:
+    leader: "<gold>"
+    coleader: "<aqua>"
+    moderator: "<green>"
+    member: "<gray>"
+    recruit: "<dark_gray>"

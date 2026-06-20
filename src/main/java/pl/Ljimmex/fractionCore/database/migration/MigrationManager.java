@@ -82,10 +82,15 @@ public class MigrationManager {
                     "id VARCHAR(36) PRIMARY KEY, " +
                     "name VARCHAR(64) NOT NULL UNIQUE, " +
                     "tag VARCHAR(16) NOT NULL UNIQUE, " +
+                    "color VARCHAR(32), " +
                     "leader_uuid VARCHAR(36) NOT NULL, " +
                     "points INTEGER DEFAULT 0, " +
                     "level INTEGER DEFAULT 1, " +
-                    "created_at INTEGER NOT NULL" +
+                    "created_at INTEGER NOT NULL, " +
+                    "home_world VARCHAR(64), " +
+                    "home_x DOUBLE, " +
+                    "home_y DOUBLE, " +
+                    "home_z DOUBLE" +
                     ")");
 
             statement.execute("CREATE TABLE IF NOT EXISTS players (" +
@@ -98,6 +103,7 @@ public class MigrationManager {
                     "assists INTEGER DEFAULT 0, " +
                     "points INTEGER DEFAULT 1000, " +
                     "joined_guild_at INTEGER, " +
+                    "left_guild_at INTEGER, " +
                     "FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE SET NULL" +
                     ")");
 
@@ -177,6 +183,64 @@ public class MigrationManager {
                     "winner_members INTEGER" +
                     ")");
 
+            statement.close();
+        }));
+        migrations.add(new Migration(2, "Add guild color column", connection -> {
+            Statement statement = connection.createStatement();
+            DatabaseType type = databaseManager.getConfig().getType();
+            String sql = type == DatabaseType.SQLITE
+                    ? "ALTER TABLE guilds ADD COLUMN color VARCHAR(32)"
+                    : "ALTER TABLE guilds ADD COLUMN IF NOT EXISTS color VARCHAR(32)";
+            try {
+                statement.execute(sql);
+            } catch (SQLException e) {
+                // SQLite doesn't support IF NOT EXISTS; ignore if column already exists
+                if (type == DatabaseType.SQLITE && e.getMessage() != null && e.getMessage().contains("duplicate column name")) {
+                    return;
+                }
+                throw e;
+            } finally {
+                statement.close();
+            }
+        }));
+        migrations.add(new Migration(3, "Add guild home and player leave timestamp columns", connection -> {
+            Statement statement = connection.createStatement();
+            DatabaseType type = databaseManager.getConfig().getType();
+            try {
+                if (type == DatabaseType.SQLITE) {
+                    statement.execute("ALTER TABLE guilds ADD COLUMN home_world VARCHAR(64)");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN home_x DOUBLE");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN home_y DOUBLE");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN home_z DOUBLE");
+                    statement.execute("ALTER TABLE players ADD COLUMN left_guild_at INTEGER");
+                } else {
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS home_world VARCHAR(64)");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS home_x DOUBLE");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS home_y DOUBLE");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS home_z DOUBLE");
+                    statement.execute("ALTER TABLE players ADD COLUMN IF NOT EXISTS left_guild_at INTEGER");
+                }
+            } catch (SQLException e) {
+                if (type == DatabaseType.SQLITE && e.getMessage() != null && e.getMessage().contains("duplicate column name")) {
+                    return;
+                }
+                throw e;
+            } finally {
+                statement.close();
+            }
+        }));
+        migrations.add(new Migration(4, "Add guild invites table", connection -> {
+            Statement statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_invites (" +
+                    "id " + dialect.autoIncrementPrimaryKey() + ", " +
+                    "guild_id VARCHAR(36) NOT NULL, " +
+                    "player_uuid VARCHAR(36) NOT NULL, " +
+                    "invited_by VARCHAR(36) NOT NULL, " +
+                    "invited_at INTEGER NOT NULL, " +
+                    "expires_at INTEGER NOT NULL, " +
+                    "UNIQUE (guild_id, player_uuid), " +
+                    "FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE" +
+                    ")");
             statement.close();
         }));
         return migrations;

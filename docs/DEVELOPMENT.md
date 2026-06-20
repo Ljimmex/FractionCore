@@ -19,7 +19,7 @@ cd FractionCore
 The compiled JAR is placed at:
 
 ```
-build/libs/FractionCore-0.0.1.jar
+build/libs/FractionCore-0.0.2.jar
 ```
 
 ## Run a Local Test Server
@@ -81,7 +81,7 @@ This logs detailed operations to the server console. Disable with:
 ## Testing Changes
 
 1. Build the plugin.
-2. Copy `build/libs/FractionCore-0.0.1.jar` to a test server's `plugins/` directory.
+2. Copy `build/libs/FractionCore-0.0.2.jar` to a test server's `plugins/` directory.
 3. Start the server and verify logs.
 4. Test affected commands and modules.
 

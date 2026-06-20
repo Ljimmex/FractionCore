@@ -8,6 +8,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
@@ -64,6 +66,20 @@ public class LangManager {
         plugin.getLogger().info("Languages reloaded.");
     }
 
+    public void resetLanguages() {
+        File[] files = langDirectory.listFiles((dir, name) -> name.endsWith(".yml"));
+        if (files != null) {
+            for (File file : files) {
+                if (!file.delete()) {
+                    plugin.getLogger().warning("Failed to delete language file: " + file.getName());
+                }
+            }
+        }
+        languages.clear();
+        loadLanguages();
+        plugin.getLogger().info("Languages reset to defaults.");
+    }
+
     public Component getMessage(String key) {
         return getMessage(key, MessageType.INFO, PlaceholderContext.empty());
     }
@@ -90,6 +106,26 @@ public class LangManager {
         String withPrefix = applyPrefix(withPlaceholders, type, languageCode);
 
         return MessageParser.parse(withPrefix);
+    }
+
+    public Component getMessageWithoutPrefix(String key, PlaceholderContext context) {
+        String rawMessage = getRawMessage(key, defaultLanguage, true);
+        if (rawMessage == null) {
+            rawMessage = key;
+        }
+
+        String withPlaceholders = PlaceholderResolver.resolve(rawMessage, context);
+        return MessageParser.parse(withPlaceholders);
+    }
+
+    public Component getMessageWithoutPrefix(String key, PlaceholderContext context, String languageCode) {
+        String rawMessage = getRawMessage(key, languageCode, true);
+        if (rawMessage == null) {
+            rawMessage = key;
+        }
+
+        String withPlaceholders = PlaceholderResolver.resolve(rawMessage, context);
+        return MessageParser.parse(withPlaceholders);
     }
 
     public String getRawMessage(String key) {
@@ -139,17 +175,47 @@ public class LangManager {
 
     private void saveDefaultLanguageFile(String fileName) {
         File file = new File(langDirectory, fileName);
-        if (file.exists()) {
-            return;
+        boolean created = false;
+
+        if (!file.exists()) {
+            try (InputStream inputStream = plugin.getResource("lang/" + fileName)) {
+                if (inputStream != null) {
+                    Files.copy(inputStream, file.toPath());
+                    created = true;
+                }
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save default language file " + fileName, e);
+                return;
+            }
         }
 
+        // Merge missing keys from the default resource so existing files stay up to date.
+        // Also overwrite guild.create.* keys to ensure error messages are always current.
         try (InputStream inputStream = plugin.getResource("lang/" + fileName)) {
-            if (inputStream != null) {
-                Files.copy(inputStream, file.toPath());
+            if (inputStream == null) {
+                return;
+            }
+            FileConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            FileConfiguration existing = YamlConfiguration.loadConfiguration(file);
+            boolean changed = false;
+            for (String key : defaults.getKeys(true)) {
+                if (!defaults.isString(key)) {
+                    continue;
+                }
+                boolean isGuildCreate = key.startsWith("guild.create.");
+                if (isGuildCreate || !existing.contains(key)) {
+                    existing.set(key, defaults.get(key));
+                    changed = true;
+                }
+            }
+            if (changed) {
+                existing.save(file);
+                plugin.getLogger().info("Updated language file: " + fileName);
+            } else if (created) {
                 plugin.getLogger().info("Saved default language file: " + fileName);
             }
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save default language file " + fileName, e);
+            plugin.getLogger().log(Level.SEVERE, "Failed to update language file " + fileName, e);
         }
     }
 

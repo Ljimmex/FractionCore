@@ -22,32 +22,42 @@ public class GuildDaoImpl implements GuildDao {
 
     @Override
     public void save(Guild guild) throws SQLException {
-        String sql = "INSERT INTO guilds (id, name, tag, leader_uuid, points, level, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO guilds (id, name, tag, color, leader_uuid, points, level, created_at, home_world, home_x, home_y, home_z) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guild.getId().toString());
             statement.setString(2, guild.getName());
             statement.setString(3, guild.getTag());
-            statement.setString(4, guild.getLeaderUuid().toString());
-            statement.setInt(5, guild.getPoints());
-            statement.setInt(6, guild.getLevel());
-            statement.setLong(7, guild.getCreatedAt());
+            statement.setString(4, guild.getColor());
+            statement.setString(5, guild.getLeaderUuid().toString());
+            statement.setInt(6, guild.getPoints());
+            statement.setInt(7, guild.getLevel());
+            statement.setLong(8, guild.getCreatedAt());
+            statement.setString(9, guild.getHomeWorld());
+            statement.setDouble(10, guild.getHomeX());
+            statement.setDouble(11, guild.getHomeY());
+            statement.setDouble(12, guild.getHomeZ());
             statement.executeUpdate();
         }
     }
 
     @Override
     public void update(Guild guild) throws SQLException {
-        String sql = "UPDATE guilds SET name = ?, tag = ?, leader_uuid = ?, points = ?, level = ?, created_at = ? WHERE id = ?";
+        String sql = "UPDATE guilds SET name = ?, tag = ?, color = ?, leader_uuid = ?, points = ?, level = ?, created_at = ?, home_world = ?, home_x = ?, home_y = ?, home_z = ? WHERE id = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guild.getName());
             statement.setString(2, guild.getTag());
-            statement.setString(3, guild.getLeaderUuid().toString());
-            statement.setInt(4, guild.getPoints());
-            statement.setInt(5, guild.getLevel());
-            statement.setLong(6, guild.getCreatedAt());
-            statement.setString(7, guild.getId().toString());
+            statement.setString(3, guild.getColor());
+            statement.setString(4, guild.getLeaderUuid().toString());
+            statement.setInt(5, guild.getPoints());
+            statement.setInt(6, guild.getLevel());
+            statement.setLong(7, guild.getCreatedAt());
+            statement.setString(8, guild.getHomeWorld());
+            statement.setDouble(9, guild.getHomeX());
+            statement.setDouble(10, guild.getHomeY());
+            statement.setDouble(11, guild.getHomeZ());
+            statement.setString(12, guild.getId().toString());
             statement.executeUpdate();
         }
     }
@@ -146,14 +156,20 @@ public class GuildDaoImpl implements GuildDao {
     }
 
     private Guild mapResultSet(ResultSet resultSet) throws SQLException {
-        return new Guild(
+        Guild guild = new Guild(
                 UUID.fromString(resultSet.getString("id")),
                 resultSet.getString("name"),
                 resultSet.getString("tag"),
+                resultSet.getString("color"),
                 UUID.fromString(resultSet.getString("leader_uuid")),
                 resultSet.getInt("points"),
                 resultSet.getInt("level"),
                 resultSet.getLong("created_at")
         );
+        guild.setHomeWorld(resultSet.getString("home_world"));
+        guild.setHomeX(resultSet.getDouble("home_x"));
+        guild.setHomeY(resultSet.getDouble("home_y"));
+        guild.setHomeZ(resultSet.getDouble("home_z"));
+        return guild;
     }
 }
