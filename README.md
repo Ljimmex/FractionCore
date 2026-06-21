@@ -19,7 +19,7 @@
 
 > ⚠️ **Development Preview v0.0.2**
 >
-> This release delivers the foundational infrastructure for Fraction Guild Clans v2.0 (Sprint 0). Core gameplay systems — guild creation, cuboid protection, guild eggs, economy, ranking, GUI, and map rendering — are scheduled for subsequent releases.
+> This release delivers Sprint 1 of Fraction Guild Clans v2.0. The **guild system** is fully playable: creation, ranks, member management, relations, chat tags, and disband. Cuboid protection, guild eggs, economy, ranking, GUI, and map rendering are scheduled for subsequent releases.
 
 ---
 
@@ -31,7 +31,7 @@ FractionCore is built around a module system where every major feature is an ind
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| `guild` | Guild creation, ranks, membership | Infrastructure |
+| `guild` | Guild creation, ranks, member management, relations, chat tags | ✅ Ready |
 | `cuboid` | Custom territory protection system | Infrastructure |
 | `egg` | Guild egg defense and destruction stages | Infrastructure |
 | `economy` | Built-in EcoCore economy | Infrastructure |
@@ -39,8 +39,7 @@ FractionCore is built around a module system where every major feature is an ind
 | `gui` | Inventory menus and interfaces | Infrastructure |
 | `tab` | Custom player list (TAB) | Infrastructure |
 | `map` | Interactive HTML guild map | Infrastructure |
-| `villagers` | Guild trading villagers and daily quests | Infrastructure |
-| `join_items` | Starter items for new players | Infrastructure |
+| `villagers` | Guild trading villagers and daily quests | Infrastructure (disabled by default) |
 | `lang` | Multi-language file system | ✅ Ready |
 | `database` | Persistence layer (SQLite/MySQL/PostgreSQL) | ✅ Ready |
 | `backup` | Automatic and manual backups | Infrastructure |
@@ -106,7 +105,6 @@ plugins/FractionCore/
 │   ├── tab.yml
 │   ├── map.yml
 │   ├── villagers.yml
-│   ├── join_items.yml
 │   ├── backup.yml
 │   └── webhook.yml
 └── data/
@@ -171,6 +169,36 @@ Each enabled module reads its dedicated file from `plugins/FractionCore/modules/
 
 | Command | Permission | Description |
 |---------|------------|-------------|
+| `/guild create <nazwa> <tag>` | `fractioncore.command.guild` | Start guild creation |
+| `/guild create confirm` | `fractioncore.command.guild` | Confirm guild creation |
+| `/guild invite <nick>` | `guild.user.invite` | Invite a player |
+| `/guild invite cancel` | `guild.user.invite` | Cancel pending invitations |
+| `/guild invite decline <tag>` | `guild.user.join` | Decline an invitation |
+| `/guild join <tag>` | `guild.user.join` | Accept invitation and join guild |
+| `/guild leave` | `guild.user.leave` | Leave your guild |
+| `/guild kick <nick>` | `guild.user.kick` | Kick a guild member |
+| `/guild promote <nick> [ranga]` | `guild.user.promote` | Promote a member |
+| `/guild demote <nick> [ranga]` | `guild.user.demote` | Demote a member |
+| `/guild leader <nick>` | `guild.user.leader` | Transfer leadership |
+| `/guild ban <nick> [powod]` | `guild.user.ban` | Ban a player from the guild |
+| `/guild unban <nick>` | `guild.user.unban` | Unban a player |
+| `/guild banlist` | `guild.user.ban` | List banned players |
+| `/guild info [tag]` | `fractioncore.command.guild` | Show guild info |
+| `/guild sethome` | `guild.user.sethome` | Set guild home |
+| `/guild home` | `guild.user.home` | Teleport to guild home |
+| `/guild description <tekst>` | `guild.user.description` | Set guild description |
+| `/guild flag <flaga> <true/false>` | `guild.user.flag` | Toggle guild flags |
+| `/guild requests` | `guild.user.requests` | List join requests |
+| `/guild joinaccept <nick>` | `guild.user.joinaccept` | Accept join request |
+| `/guild joindecline <nick>` | `guild.user.joindecline` | Decline join request |
+| `/guild disband` | `guild.user.disband` | Start disband confirmation |
+| `/guild disband confirm` | `guild.user.disband` | Confirm guild disband |
+| `/guild ally <tag>` | `guild.user.ally` | Send ally request |
+| `/guild allyaccept <tag>` | `guild.user.allyaccept` | Accept ally request |
+| `/guild allydecline <tag>` | `guild.user.allydecline` | Decline ally request |
+| `/guild enemy <tag>` | `guild.user.enemy` | Declare enemy |
+| `/guild neutral <tag>` | `guild.user.neutral` | Set neutral relation |
+| `/guild relations` | `guild.user.relations` | List relations |
 | `/guild help` | `fractioncore.command.guild` | Displays help |
 
 ### Admin Commands
@@ -190,6 +218,7 @@ Each enabled module reads its dedicated file from `plugins/FractionCore/modules/
 | Permission | Default | Description |
 |------------|---------|-------------|
 | `fractioncore.command.guild` | `true` | Allows use of the `/guild` command |
+| `guild.user.*` | `true` | All default guild member commands (see `plugin.yml`) |
 | `fractioncore.admin` | `op` | Base access to `/guild admin` commands |
 | `fractioncore.admin.module` | `op` | Manage module lifecycle |
 | `fractioncore.admin.lang.reload` | `op` | Reload language files |
@@ -247,6 +276,11 @@ FractionCore/
 │   └── modules/
 │       └── *.yml
 ├── docs/
+│   ├── GUILD_SYSTEM.md
+│   ├── ARCHITECTURE.md
+│   ├── DEVELOPMENT.md
+│   ├── DATABASE.md
+│   ├── API.md
 │   ├── Fraction_Guild_Clans_v2.0_Dokumentacja.pdf
 │   └── FGC_Roadmap_v2.pdf
 ├── index.html                     # Interactive roadmap portal
@@ -272,6 +306,7 @@ FractionCore/
 - Development roadmap: `docs/FGC_Roadmap_v2.pdf`
 - Interactive progress portal: `index.html`
 - Technical documentation:
+  - [`docs/GUILD_SYSTEM.md`](docs/GUILD_SYSTEM.md) — full guild system documentation (commands, ranks, relations, config)
   - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
   - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — developer setup and build guide
   - [`docs/API.md`](docs/API.md) — public API skeleton

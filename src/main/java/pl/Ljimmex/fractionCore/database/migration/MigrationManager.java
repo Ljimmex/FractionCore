@@ -243,6 +243,82 @@ public class MigrationManager {
                     ")");
             statement.close();
         }));
+        migrations.add(new Migration(5, "Add guild settings columns", connection -> {
+            Statement statement = connection.createStatement();
+            DatabaseType type = databaseManager.getConfig().getType();
+            try {
+                if (type == DatabaseType.SQLITE) {
+                    statement.execute("ALTER TABLE guilds ADD COLUMN description " + dialect.textType());
+                    statement.execute("ALTER TABLE guilds ADD COLUMN is_public INTEGER DEFAULT 1");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN allow_join_requests INTEGER DEFAULT 0");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN show_home INTEGER DEFAULT 0");
+                } else {
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS description " + dialect.textType());
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS is_public INTEGER DEFAULT 1");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS allow_join_requests INTEGER DEFAULT 0");
+                    statement.execute("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS show_home INTEGER DEFAULT 0");
+                }
+            } catch (SQLException e) {
+                if (type == DatabaseType.SQLITE && e.getMessage() != null && e.getMessage().contains("duplicate column name")) {
+                    return;
+                }
+                throw e;
+            } finally {
+                statement.close();
+            }
+        }));
+        migrations.add(new Migration(6, "Add guild join requests table", connection -> {
+            Statement statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_join_requests (" +
+                    "id " + dialect.autoIncrementPrimaryKey() + ", " +
+                    "guild_id VARCHAR(36) NOT NULL, " +
+                    "player_uuid VARCHAR(36) NOT NULL, " +
+                    "requested_at INTEGER NOT NULL, " +
+                    "UNIQUE (guild_id, player_uuid), " +
+                    "FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE" +
+                    ")");
+            statement.close();
+        }));
+        migrations.add(new Migration(7, "Add guild disband history table", connection -> {
+            Statement statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_disband_history (" +
+                    "id " + dialect.autoIncrementPrimaryKey() + ", " +
+                    "original_guild_id VARCHAR(36) NOT NULL, " +
+                    "name VARCHAR(64) NOT NULL, " +
+                    "tag VARCHAR(16) NOT NULL, " +
+                    "color VARCHAR(32), " +
+                    "leader_uuid VARCHAR(36) NOT NULL, " +
+                    "points INTEGER DEFAULT 0, " +
+                    "level INTEGER DEFAULT 1, " +
+                    "created_at INTEGER NOT NULL, " +
+                    "disbanded_at INTEGER NOT NULL, " +
+                    "disbanded_by VARCHAR(36) NOT NULL" +
+                    ")");
+            statement.close();
+        }));
+        migrations.add(new Migration(8, "Add guild relations and ally request tables", connection -> {
+            Statement statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_relations (" +
+                    "id " + dialect.autoIncrementPrimaryKey() + ", " +
+                    "guild1_id VARCHAR(36) NOT NULL, " +
+                    "guild2_id VARCHAR(36) NOT NULL, " +
+                    "type VARCHAR(16) NOT NULL, " +
+                    "created_at INTEGER NOT NULL, " +
+                    "UNIQUE (guild1_id, guild2_id), " +
+                    "FOREIGN KEY (guild1_id) REFERENCES guilds(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (guild2_id) REFERENCES guilds(id) ON DELETE CASCADE" +
+                    ")");
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_ally_requests (" +
+                    "id " + dialect.autoIncrementPrimaryKey() + ", " +
+                    "guild_id VARCHAR(36) NOT NULL, " +
+                    "target_guild_id VARCHAR(36) NOT NULL, " +
+                    "requested_at INTEGER NOT NULL, " +
+                    "UNIQUE (guild_id, target_guild_id), " +
+                    "FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (target_guild_id) REFERENCES guilds(id) ON DELETE CASCADE" +
+                    ")");
+            statement.close();
+        }));
         return migrations;
     }
 }

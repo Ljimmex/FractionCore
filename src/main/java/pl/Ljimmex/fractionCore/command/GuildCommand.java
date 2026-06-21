@@ -24,7 +24,10 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = List.of(
             "admin", "create", "invite", "join", "leave", "kick",
-            "promote", "demote", "leader", "ban", "unban", "banlist", "info", "help"
+            "promote", "demote", "leader", "ban", "unban", "banlist", "info",
+            "sethome", "home", "description",
+            "flag", "requests", "joinaccept", "joindecline", "disband",
+            "ally", "allyaccept", "allydecline", "enemy", "neutral", "relations", "help"
     );
 
     private final GuildAdminCommand adminCommand;
@@ -75,6 +78,34 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
                 return handleBanList(sender, args);
             case "info":
                 return handleInfo(sender, args);
+            case "sethome":
+                return handleSetHome(sender, args);
+            case "home":
+                return handleHome(sender, args);
+            case "description":
+                return handleDescription(sender, args);
+            case "flag":
+                return handleFlag(sender, args);
+            case "requests":
+                return handleRequests(sender, args);
+            case "joinaccept":
+                return handleJoinAccept(sender, args);
+            case "joindecline":
+                return handleJoinDecline(sender, args);
+            case "disband":
+                return handleDisband(sender, args);
+            case "ally":
+                return handleAlly(sender, args);
+            case "allyaccept":
+                return handleAllyAccept(sender, args);
+            case "allydecline":
+                return handleAllyDecline(sender, args);
+            case "enemy":
+                return handleEnemy(sender, args);
+            case "neutral":
+                return handleNeutral(sender, args);
+            case "relations":
+                return handleRelations(sender, args);
             case "help":
                 sendUsage(sender);
                 return true;
@@ -101,42 +132,24 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Uzycie: /guild create <nazwa> <tag> [kolor]").color(NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Uzycie: /guild create <nazwa> <tag>").color(NamedTextColor.YELLOW));
             sender.sendMessage(Component.text("Nastepnie: /guild create confirm").color(NamedTextColor.YELLOW));
             return true;
         }
 
         List<String> parsed = parseQuotedArgs(args, 1);
-        if (parsed.isEmpty()) {
-            sender.sendMessage(Component.text("Uzycie: /guild create <nazwa> <tag> [kolor]").color(NamedTextColor.YELLOW));
+        if (parsed.size() < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild create <nazwa> <tag>").color(NamedTextColor.YELLOW));
             sender.sendMessage(Component.text("Nastepnie: /guild create confirm").color(NamedTextColor.YELLOW));
             return true;
         }
 
-        String color = null;
-        int tagIndex;
-        int nameEnd;
-        if (parsed.size() >= 2 && isColorArgument(parsed.get(parsed.size() - 1))) {
-            color = parsed.get(parsed.size() - 1);
-            tagIndex = parsed.size() - 2;
-            nameEnd = parsed.size() - 2;
-        } else {
-            tagIndex = parsed.size() - 1;
-            nameEnd = parsed.size() - 1;
-        }
+        String tag = parsed.get(parsed.size() - 1);
+        String name = String.join(" ", parsed.subList(0, parsed.size() - 1));
 
-        if (tagIndex < 0 || nameEnd < 0) {
-            sender.sendMessage(Component.text("Uzycie: /guild create <nazwa> <tag> [kolor]").color(NamedTextColor.YELLOW));
-            sender.sendMessage(Component.text("Nastepnie: /guild create confirm").color(NamedTextColor.YELLOW));
-            return true;
-        }
-
-        String tag = parsed.get(tagIndex);
-        String name = String.join(" ", parsed.subList(0, nameEnd));
-
-        GuildCreateResult result = guildService.prepareCreation(player, name, tag, color);
+        GuildCreateResult result = guildService.prepareCreation(player, name, tag);
         if (result == GuildCreateResult.SUCCESS) {
-            Component preview = guildService.buildPreview(player, name, tag, color);
+            Component preview = guildService.buildPreview(player, name, tag);
             sender.sendMessage(preview);
         } else {
             player.sendActionBar(guildService.getResultMessage(player, result, name, tag));
@@ -336,8 +349,232 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleSetHome(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.sethome")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.setGuildHome(player);
+        return true;
+    }
+
+    private boolean handleHome(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.home")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.teleportHome(player);
+        return true;
+    }
+
+    private boolean handleDescription(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild description <tekst>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.description")) {
+            sendNoPermission(player);
+            return true;
+        }
+        String text = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+        guildService.setGuildDescription(player, text);
+        return true;
+    }
+
+    private boolean handleFlag(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Uzycie: /guild flag <flaga> <true/false>").color(NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Dostepne flagi: public, allow-join-requests, show-home").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.flag")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.setGuildFlag(player, args[1], args[2]);
+        return true;
+    }
+
     private void sendNoPermission(Player player) {
         player.sendMessage(langManager.getMessage("general.no_permission", MessageType.ERROR, PlaceholderContext.of(player)));
+    }
+
+    private boolean handleDisband(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.disband")) {
+            sendNoPermission(player);
+            return true;
+        }
+        if (args.length == 2 && "confirm".equalsIgnoreCase(args[1])) {
+            guildService.confirmDisband(player);
+            return true;
+        }
+        guildService.prepareDisband(player);
+        return true;
+    }
+
+    private boolean handleRequests(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.requests")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.sendRequestList(player);
+        return true;
+    }
+
+    private boolean handleJoinAccept(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild joinaccept <nick>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.joinaccept")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.acceptJoinRequest(player, args[1]);
+        return true;
+    }
+
+    private boolean handleJoinDecline(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild joindecline <nick>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.joindecline")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.declineJoinRequest(player, args[1]);
+        return true;
+    }
+
+    private boolean handleAlly(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild ally <tag-gildii>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.ally")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.sendAllyRequest(player, args[1]);
+        return true;
+    }
+
+    private boolean handleAllyAccept(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild allyaccept <tag-gildii>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.allyaccept")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.acceptAllyRequest(player, args[1]);
+        return true;
+    }
+
+    private boolean handleAllyDecline(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild allydecline <tag-gildii>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.allydecline")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.declineAllyRequest(player, args[1]);
+        return true;
+    }
+
+    private boolean handleEnemy(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild enemy <tag-gildii>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.enemy")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.setEnemy(player, args[1]);
+        return true;
+    }
+
+    private boolean handleNeutral(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Uzycie: /guild neutral <tag-gildii>").color(NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.neutral")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.setNeutral(player, args[1]);
+        return true;
+    }
+
+    private boolean handleRelations(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Tej komendy moze uzyc tylko gracz.").color(NamedTextColor.RED));
+            return true;
+        }
+        if (!hasSubPermission(player, "guild.user.relations")) {
+            sendNoPermission(player);
+            return true;
+        }
+        guildService.sendRelationsList(player);
+        return true;
     }
 
     private boolean hasSubPermission(Player player, String permission) {
@@ -351,7 +588,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("=== FRACTIONCORE ===").color(NamedTextColor.GOLD));
         sender.sendMessage(Component.text("/guild help - pomoc").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild create <nazwa> <tag> [kolor] - zaloz gildie").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild create <nazwa> <tag> - zaloz gildie").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild invite <nick> - zapros gracza").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild invite cancel - anuluj zaproszenia").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild invite decline <tag> - odrzuc zaproszenie").color(NamedTextColor.YELLOW));
@@ -365,6 +602,21 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/guild unban <nick> - odbanuj").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild banlist - lista zbanowanych").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild info [tag] - informacje").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild sethome - ustaw dom gildii").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild home - teleportuj do domu gildii").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild description <tekst> - ustaw opis gildii").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild flag <flaga> <true/false> - ustaw flage gildii").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild disband - rozwiaz gildie (lider, wymaga potwierdzenia)").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild disband confirm - potwierdz rozwiazanie gildii").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild requests - lista prosb o dolaczenie (lider/co-lider)").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild joinaccept <nick> - przyjmij prosbe o dolaczenie").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild joindecline <nick> - odrzuc prosbe o dolaczenie").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild ally <tag> - wyslij prosbe o sojusz").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild allyaccept <tag> - zaakceptuj prosbe o sojusz").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild allydecline <tag> - odrzuc prosbe o sojusz").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild enemy <tag> - ustal wrogosc").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild neutral <tag> - ustaw relacje neutralna").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/guild relations - lista sojuszy i wrogow").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/guild admin - komendy administratorskie").color(NamedTextColor.YELLOW));
     }
 
@@ -380,7 +632,7 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
             return adminCommand.onTabComplete(sender, command, label, adminArgs);
         }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("disband"))) {
             return filter(List.of("confirm"), args[1]);
         }
 
@@ -391,12 +643,24 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
             return filter(options, args[1]);
         }
 
-        if (args.length == 2 && List.of("kick", "promote", "demote", "leader", "ban", "unban").contains(args[0].toLowerCase())) {
+        if (args.length == 2 && List.of("kick", "promote", "demote", "leader", "ban", "unban", "joinaccept", "joindecline").contains(args[0].toLowerCase())) {
             return filter(onlinePlayerNames(), args[1]);
         }
 
         if (args.length == 3 && List.of("promote", "demote").contains(args[0].toLowerCase())) {
             return filter(rankNames(), args[2]);
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("flag")) {
+            return filter(List.of("public", "allow-join-requests", "show-home"), args[1]);
+        }
+
+        if (args.length == 3 && args[0].equalsIgnoreCase("flag")) {
+            return filter(List.of("true", "false"), args[2]);
+        }
+
+        if (args.length == 2 && List.of("ally", "allyaccept", "allydecline", "enemy", "neutral").contains(args[0].toLowerCase())) {
+            return filter(guildTags(), args[1]);
         }
 
         return List.of();
@@ -414,19 +678,23 @@ public class GuildCommand implements CommandExecutor, TabCompleter {
         return names;
     }
 
+    private List<String> guildTags() {
+        List<String> tags = new ArrayList<>();
+        try {
+            for (var guild : guildService.getGuildDao().findAll()) {
+                tags.add(guild.getTag());
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return tags;
+    }
+
     private List<String> filter(List<String> options, String prefix) {
         String lower = prefix.toLowerCase();
         return options.stream()
                 .filter(option -> option.toLowerCase().startsWith(lower))
                 .toList();
-    }
-
-    private boolean isColorArgument(String arg) {
-        if (arg == null || arg.isEmpty()) {
-            return false;
-        }
-        char first = arg.charAt(0);
-        return first == '<' || first == '&' || first == '§';
     }
 
     private List<String> parseQuotedArgs(String[] args, int start) {

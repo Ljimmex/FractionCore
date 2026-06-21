@@ -59,6 +59,27 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 - New permission nodes: `guild.user.invite|join|leave|kick|promote|demote|leader|ban|unban` (default `true`).
 - New language keys in `pl_PL.yml` and `en_US.yml` for all member-management messages.
 
+### Fixed
+- Guild chat no longer displays raw closing MiniMessage tags such as `</aqua>`.
+- Rank letters (`L`, `Z`, `M`, `C`, `R`) in guild chat are now automatically wrapped in brackets, e.g. `[MBA][C] Maniek: message`.
+- `ConfigManager` guild-chat migration now detects and repairs formats containing broken closing tags.
+- Scoreboard / nameplate guild tags now update their relation color correctly instead of staying stale.
+- `GuildTagManager` no longer destroys and recreates all scoreboard teams on every update, preventing clients from missing color changes.
+- `GuildTagManager` now supports hex relation colors for nameplates by approximating to the nearest vanilla color.
+- Mixed legacy (`&`/`§`) and MiniMessage color codes in scoreboard prefixes are now parsed correctly.
+- Default neutral relation color changed from `<white>` to `<gray>` so other guild tags are no longer plain white.
+- Fixed ally command messages not replacing the `{target_tag}` placeholder (was using `{tag}` instead).
+- Fixed `/guild disband` showing `0` seconds when `disband.timeout-seconds` is misconfigured; it now falls back to 60 seconds.
+- Added `confirm` tab-completion for `/guild disband confirm` and listed it in `/guild help`.
+- Added an action-bar countdown while waiting for `/guild disband confirm`.
+- `/guild disband` no longer sends a chat confirmation message; only the action-bar countdown is shown.
+- Action-bar countdown for `/guild disband` no longer includes the `[Gildia]` prefix.
+- Fixed the player disbanding the guild receiving both the success and broadcast messages; broadcast now goes to everyone else.
+- Fixed guild chat closing bracket color — the `]` after the guild tag now uses the format color instead of resetting to white.
+- Added complete Guild System documentation in `docs/GUILD_SYSTEM.md` (Task 1.6).
+- Fixed guild egg not being removed when the guild is disbanded.
+- Updated `README.md` to reflect the current v0.0.2 feature set, guild commands, permissions, and documentation links.
+
 ---
 
 ## [0.0.1] - 2026-06-18

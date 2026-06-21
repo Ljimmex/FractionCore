@@ -24,6 +24,20 @@ permissions:
       guild.user.leader: true
       guild.user.ban: true
       guild.user.unban: true
+      guild.user.sethome: true
+      guild.user.home: true
+      guild.user.description: true
+      guild.user.flag: true
+      guild.user.requests: true
+      guild.user.joinaccept: true
+      guild.user.joindecline: true
+      guild.user.disband: true
+      guild.user.ally: true
+      guild.user.allyaccept: true
+      guild.user.allydecline: true
+      guild.user.enemy: true
+      guild.user.neutral: true
+      guild.user.relations: true
   guild.user.invite:
     description: Allows inviting players to the guild
     default: true
@@ -50,6 +64,48 @@ permissions:
     default: true
   guild.user.unban:
     description: Allows unbanning players from the guild
+    default: true
+  guild.user.sethome:
+    description: Allows setting the guild home
+    default: true
+  guild.user.home:
+    description: Allows teleporting to the guild home
+    default: true
+  guild.user.description:
+    description: Allows editing the guild description
+    default: true
+  guild.user.flag:
+    description: Allows changing guild flags
+    default: true
+  guild.user.requests:
+    description: Allows listing guild join requests
+    default: true
+  guild.user.joinaccept:
+    description: Allows accepting guild join requests
+    default: true
+  guild.user.joindecline:
+    description: Allows declining guild join requests
+    default: true
+  guild.user.disband:
+    description: Allows disbanding the guild
+    default: true
+  guild.user.ally:
+    description: Allows sending ally requests
+    default: true
+  guild.user.allyaccept:
+    description: Allows accepting ally requests
+    default: true
+  guild.user.allydecline:
+    description: Allows declining ally requests
+    default: true
+  guild.user.enemy:
+    description: Allows declaring enemy status
+    default: true
+  guild.user.neutral:
+    description: Allows setting neutral relations
+    default: true
+  guild.user.relations:
+    description: Allows viewing guild relations
     default: true
   fractioncore.admin:
     description: Allows access to admin commands

@@ -1,25 +1,15 @@
-# FractionCore v2.0 - Guild module configuration
-# Schema version: 2.0
-
-schema-version: 1
-enabled: true
-
+# Guild foundation settings
 foundation:
   min-name-length: 3
-  max-name-length: 24
+  max-name-length: 32
   min-tag-length: 2
   max-tag-length: 6
-  name-pattern: "[A-Za-z0-9_ ]+"
-  tag-pattern: "[A-Za-z0-9]+"
-  default-color: "<gray>"
-  starting-radius: 16
-  min-distance-from-spawn: 200
-  min-distance-between-guilds: 5
-  announce-globally: true
-  egg-block: DRAGON_EGG
-  egg-center-y: 20
+  # Whether to announce guild creation in global chat
+  announce-globally: false
 
+# Cost of creating a guild (items)
 foundation-cost:
+  enabled: true
   items:
     - material: DIAMOND_BLOCK
       amount: 16
@@ -34,6 +24,15 @@ foundation-requirements:
   blocked-worlds:
     - "world_spawn"
     - "world_arena"
+
+disband:
+  # Time to confirm /guild disband confirm after /guild disband (seconds)
+  timeout-seconds: 60
+  refund:
+    # Whether to return a percentage of the foundation cost items
+    enabled: false
+    # Percentage of the foundation cost returned (0.0 - 1.0)
+    percentage: 0.5
 
 ranks:
   leader:
@@ -53,7 +52,6 @@ ranks:
     weight: 20
 
 member-management:
-  # Max guild members (can be increased by cuboid levels / VIP permissions in the future)
   max-members: 10
   # How long an invite stays valid (in minutes)
   invite-timeout-minutes: 10
@@ -68,12 +66,38 @@ member-management:
       - material: DIAMOND
         amount: 16
 
+# Guild settings (Task 1.4)
+settings:
+  home:
+    # Delay before teleporting to guild home (seconds). 0 = instant.
+    teleport-delay-seconds: 5
+    # Cooldown between /guild home uses (seconds).
+    cooldown-seconds: 300
+  description:
+    max-length: 256
+  # Default guild flags for newly created guilds
+  flags:
+    is-public: true
+    allow-join-requests: false
+    show-home: false
+
+# Relation colors used for guild tags (chat, nameplate, TAB).
+# Accepted formats: MiniMessage (<color>) or legacy (&k).
+relation-colors:
+  guildless: "<gray>"
+  member: "<green>"
+  ally: "<dark_aqua>"
+  enemy: "<red>"
+  truce: "<yellow>"
+  neutral: "<gray>"
+
 # Guild chat formatting
 chat:
   enabled: true
   # Available placeholders: {tag}, {guild}, {rank_letter}, {player}
-  # The actual chat message is appended after this prefix.
-  format: "<dark_gray>[<aqua>{tag}</aqua>]{rank_letter} <white>{player}<gray>: "
+  # The {tag} placeholder is automatically colored by the viewer's relation to the speaker's guild.
+  # Rank letter is shown only to members of the same guild and is automatically wrapped in brackets.
+  format: "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: "
   # One-letter abbreviation shown next to the guild tag.
   rank-letters:
     leader: "L"

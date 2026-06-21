@@ -135,6 +135,7 @@ public class ConfigManager {
         FileConfiguration defaults = mergeModuleDefaults(fileName, file, config);
         if ("guild.yml".equals(fileName)) {
             migrateGuildChatFormat(config, defaults, file);
+            migrateGuildRelationColors(config, defaults, file);
         }
         moduleConfigs.put(fileName, config);
         return config;
@@ -181,15 +182,29 @@ public class ConfigManager {
 
     private void migrateGuildChatFormat(FileConfiguration config, FileConfiguration defaults, File file) {
         String format = config.getString("chat.format", "");
-        if (format.contains("{rank}") || format.contains("<yellow>[{rank_letter}]</yellow>")) {
+        if (format.contains("{rank}") || format.contains("<yellow>[{rank_letter}]</yellow>") || format.contains("</")) {
             String newFormat = defaults.getString("chat.format",
-                    "<dark_gray>[<aqua>{tag}</aqua>]{rank_letter} <white>{player}<gray>: ");
+                    "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
             config.set("chat.format", newFormat);
             try {
                 config.save(file);
-                plugin.getLogger().info("Migrated guild chat format to the new version (removed {rank} placeholder).");
+                plugin.getLogger().info("Migrated guild chat format to the new version (removed {rank} placeholder / fixed closing tags).");
             } catch (IOException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to migrate guild chat format", e);
+            }
+        }
+    }
+
+    private void migrateGuildRelationColors(FileConfiguration config, FileConfiguration defaults, File file) {
+        String neutral = config.getString("relation-colors.neutral", "");
+        if ("<white>".equalsIgnoreCase(neutral)) {
+            String newColor = defaults.getString("relation-colors.neutral", "<gray>");
+            config.set("relation-colors.neutral", newColor);
+            try {
+                config.save(file);
+                plugin.getLogger().info("Migrated neutral relation color from <white> to " + newColor + ".");
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to migrate neutral relation color", e);
             }
         }
     }

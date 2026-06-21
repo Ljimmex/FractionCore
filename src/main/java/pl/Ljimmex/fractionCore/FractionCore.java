@@ -12,7 +12,11 @@ import pl.Ljimmex.fractionCore.config.DebugManager;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildRelationDao;
 import pl.Ljimmex.fractionCore.database.dao.PlayerDao;
 import pl.Ljimmex.fractionCore.module.ModuleManager;
 import pl.Ljimmex.fractionCore.module.modules.CuboidModule;
@@ -124,7 +128,12 @@ public final class FractionCore extends JavaPlugin {
         CuboidDao cuboidDao = databaseModule.getCuboidDao();
         GuildBanDao guildBanDao = databaseModule.getGuildBanDao();
         GuildInviteDao guildInviteDao = databaseModule.getGuildInviteDao();
-        return new GuildService(this, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, configManager.getModuleConfig("guild"), langManager);
+        GuildJoinRequestDao guildJoinRequestDao = databaseModule.getGuildJoinRequestDao();
+        GuildRelationDao guildRelationDao = databaseModule.getGuildRelationDao();
+        GuildAllyRequestDao guildAllyRequestDao = databaseModule.getGuildAllyRequestDao();
+        GuildDisbandHistoryDao guildDisbandHistoryDao = databaseModule.getGuildDisbandHistoryDao();
+        return new GuildService(this, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, guildJoinRequestDao,
+                guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, configManager.getModuleConfig("guild"), langManager);
     }
 
     private void printStartupBanner() {

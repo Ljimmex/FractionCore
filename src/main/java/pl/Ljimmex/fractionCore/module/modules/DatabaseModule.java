@@ -11,7 +11,15 @@ import pl.Ljimmex.fractionCore.database.dao.GuildBanDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDaoImpl;
+import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDaoImpl;
+import pl.Ljimmex.fractionCore.database.dao.GuildRelationDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildRelationDaoImpl;
+import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildDaoImpl;
+import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.PlayerDao;
@@ -30,8 +38,12 @@ public class DatabaseModule extends BaseModule {
     private CuboidDao cuboidDao;
     private GuildBanDao guildBanDao;
     private GuildInviteDao guildInviteDao;
+    private GuildJoinRequestDao guildJoinRequestDao;
+    private GuildRelationDao guildRelationDao;
+    private GuildAllyRequestDao guildAllyRequestDao;
     private GuildActivityLogDao guildActivityLogDao;
     private GuildEggLogDao guildEggLogDao;
+    private GuildDisbandHistoryDao guildDisbandHistoryDao;
     private SeasonDao seasonDao;
 
     public DatabaseModule(JavaPlugin plugin) {
@@ -54,8 +66,12 @@ public class DatabaseModule extends BaseModule {
             cuboidDao = new CuboidDaoImpl(databaseManager);
             guildBanDao = new GuildBanDaoImpl(databaseManager);
             guildInviteDao = new GuildInviteDaoImpl(databaseManager);
+            guildJoinRequestDao = new GuildJoinRequestDaoImpl(databaseManager);
+            guildRelationDao = new GuildRelationDaoImpl(databaseManager);
+            guildAllyRequestDao = new GuildAllyRequestDaoImpl(databaseManager);
             guildActivityLogDao = new GuildActivityLogDaoImpl(databaseManager);
             guildEggLogDao = new GuildEggLogDaoImpl(databaseManager);
+            guildDisbandHistoryDao = new GuildDisbandHistoryDaoImpl(databaseManager);
             seasonDao = new SeasonDaoImpl(databaseManager);
         } catch (SQLException e) {
             getPlugin().getLogger().severe("Failed to connect to database: " + e.getMessage());
@@ -94,12 +110,28 @@ public class DatabaseModule extends BaseModule {
         return guildInviteDao;
     }
 
+    public GuildJoinRequestDao getGuildJoinRequestDao() {
+        return guildJoinRequestDao;
+    }
+
+    public GuildRelationDao getGuildRelationDao() {
+        return guildRelationDao;
+    }
+
+    public GuildAllyRequestDao getGuildAllyRequestDao() {
+        return guildAllyRequestDao;
+    }
+
     public GuildActivityLogDao getGuildActivityLogDao() {
         return guildActivityLogDao;
     }
 
     public GuildEggLogDao getGuildEggLogDao() {
         return guildEggLogDao;
+    }
+
+    public GuildDisbandHistoryDao getGuildDisbandHistoryDao() {
+        return guildDisbandHistoryDao;
     }
 
     public SeasonDao getSeasonDao() {

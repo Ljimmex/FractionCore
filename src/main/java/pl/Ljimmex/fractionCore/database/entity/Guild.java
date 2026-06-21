@@ -18,10 +18,17 @@ public class Guild {
     private double homeX;
     private double homeY;
     private double homeZ;
+    private String description;
+    private boolean isPublic;
+    private boolean allowJoinRequests;
+    private boolean showHome;
     private List<GuildMember> members;
 
     public Guild() {
         this.members = new ArrayList<>();
+        this.isPublic = true;
+        this.allowJoinRequests = false;
+        this.showHome = false;
     }
 
     public Guild(UUID id, String name, String tag, String color, UUID leaderUuid, int points, int level, long createdAt) {
@@ -34,6 +41,9 @@ public class Guild {
         this.level = level;
         this.createdAt = createdAt;
         this.members = new ArrayList<>();
+        this.isPublic = true;
+        this.allowJoinRequests = false;
+        this.showHome = false;
     }
 
     public UUID getId() {
@@ -130,6 +140,38 @@ public class Guild {
 
     public void setHomeZ(double homeZ) {
         this.homeZ = homeZ;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public boolean isAllowJoinRequests() {
+        return allowJoinRequests;
+    }
+
+    public void setAllowJoinRequests(boolean allowJoinRequests) {
+        this.allowJoinRequests = allowJoinRequests;
+    }
+
+    public boolean isShowHome() {
+        return showHome;
+    }
+
+    public void setShowHome(boolean showHome) {
+        this.showHome = showHome;
     }
 
     public List<GuildMember> getMembers() {

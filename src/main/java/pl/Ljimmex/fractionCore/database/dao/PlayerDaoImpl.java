@@ -139,7 +139,7 @@ public class PlayerDaoImpl implements PlayerDao {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        return new PlayerData(
+        PlayerData data = new PlayerData(
                 UUID.fromString(resultSet.getString("uuid")),
                 resultSet.getString("name"),
                 guildIdStr != null ? UUID.fromString(guildIdStr) : null,
@@ -151,5 +151,6 @@ public class PlayerDaoImpl implements PlayerDao {
                 resultSet.getLong("joined_guild_at"),
                 resultSet.getLong("left_guild_at")
         );
+        return data;
     }
 }

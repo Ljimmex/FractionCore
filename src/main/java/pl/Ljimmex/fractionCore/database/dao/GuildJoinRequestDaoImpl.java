@@ -1,7 +1,7 @@
 package pl.Ljimmex.fractionCore.database.dao;
 
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
-import pl.Ljimmex.fractionCore.database.entity.GuildBan;
+import pl.Ljimmex.fractionCore.database.entity.GuildJoinRequest;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,31 +12,29 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class GuildBanDaoImpl implements GuildBanDao {
+public class GuildJoinRequestDaoImpl implements GuildJoinRequestDao {
 
     private final DatabaseManager databaseManager;
 
-    public GuildBanDaoImpl(DatabaseManager databaseManager) {
+    public GuildJoinRequestDaoImpl(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }
 
     @Override
-    public void save(GuildBan ban) throws SQLException {
-        String sql = "INSERT INTO guild_bans (guild_id, player_uuid, reason, banned_by, banned_at) VALUES (?, ?, ?, ?, ?)";
+    public void save(GuildJoinRequest request) throws SQLException {
+        String sql = "INSERT INTO guild_join_requests (guild_id, player_uuid, requested_at) VALUES (?, ?, ?)";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, ban.getGuildId().toString());
-            statement.setString(2, ban.getPlayerUuid().toString());
-            statement.setString(3, ban.getReason());
-            statement.setString(4, ban.getBannedBy().toString());
-            statement.setLong(5, ban.getBannedAt());
+            statement.setString(1, request.getGuildId().toString());
+            statement.setString(2, request.getPlayerUuid().toString());
+            statement.setLong(3, request.getRequestedAt());
             statement.executeUpdate();
         }
     }
 
     @Override
     public void delete(UUID guildId, UUID playerUuid) throws SQLException {
-        String sql = "DELETE FROM guild_bans WHERE guild_id = ? AND player_uuid = ?";
+        String sql = "DELETE FROM guild_join_requests WHERE guild_id = ? AND player_uuid = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guildId.toString());
@@ -47,7 +45,7 @@ public class GuildBanDaoImpl implements GuildBanDao {
 
     @Override
     public void deleteByGuild(UUID guildId) throws SQLException {
-        String sql = "DELETE FROM guild_bans WHERE guild_id = ?";
+        String sql = "DELETE FROM guild_join_requests WHERE guild_id = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guildId.toString());
@@ -56,8 +54,8 @@ public class GuildBanDaoImpl implements GuildBanDao {
     }
 
     @Override
-    public Optional<GuildBan> find(UUID guildId, UUID playerUuid) throws SQLException {
-        String sql = "SELECT * FROM guild_bans WHERE guild_id = ? AND player_uuid = ?";
+    public Optional<GuildJoinRequest> find(UUID guildId, UUID playerUuid) throws SQLException {
+        String sql = "SELECT * FROM guild_join_requests WHERE guild_id = ? AND player_uuid = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guildId.toString());
@@ -72,24 +70,24 @@ public class GuildBanDaoImpl implements GuildBanDao {
     }
 
     @Override
-    public List<GuildBan> findByGuild(UUID guildId) throws SQLException {
-        List<GuildBan> bans = new ArrayList<>();
-        String sql = "SELECT * FROM guild_bans WHERE guild_id = ?";
+    public List<GuildJoinRequest> findByGuild(UUID guildId) throws SQLException {
+        List<GuildJoinRequest> requests = new ArrayList<>();
+        String sql = "SELECT * FROM guild_join_requests WHERE guild_id = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guildId.toString());
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    bans.add(mapResultSet(resultSet));
+                    requests.add(mapResultSet(resultSet));
                 }
             }
         }
-        return bans;
+        return requests;
     }
 
     @Override
     public boolean exists(UUID guildId, UUID playerUuid) throws SQLException {
-        String sql = "SELECT 1 FROM guild_bans WHERE guild_id = ? AND player_uuid = ?";
+        String sql = "SELECT 1 FROM guild_join_requests WHERE guild_id = ? AND player_uuid = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, guildId.toString());
@@ -100,14 +98,12 @@ public class GuildBanDaoImpl implements GuildBanDao {
         }
     }
 
-    private GuildBan mapResultSet(ResultSet resultSet) throws SQLException {
-        return new GuildBan(
+    private GuildJoinRequest mapResultSet(ResultSet resultSet) throws SQLException {
+        return new GuildJoinRequest(
                 resultSet.getLong("id"),
                 UUID.fromString(resultSet.getString("guild_id")),
                 UUID.fromString(resultSet.getString("player_uuid")),
-                resultSet.getString("reason"),
-                UUID.fromString(resultSet.getString("banned_by")),
-                resultSet.getLong("banned_at")
+                resultSet.getLong("requested_at")
         );
     }
 }

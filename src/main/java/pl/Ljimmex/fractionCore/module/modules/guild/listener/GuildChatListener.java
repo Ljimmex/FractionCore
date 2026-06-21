@@ -1,9 +1,9 @@
 package pl.Ljimmex.fractionCore.module.modules.guild.listener;
 
-import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,6 +14,7 @@ import pl.Ljimmex.fractionCore.database.dao.PlayerDao;
 import pl.Ljimmex.fractionCore.database.entity.Guild;
 import pl.Ljimmex.fractionCore.database.entity.GuildRank;
 import pl.Ljimmex.fractionCore.database.entity.PlayerData;
+import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.GuildRelationManager;
 
 import java.sql.SQLException;
 import java.util.Locale;
@@ -26,12 +27,15 @@ public class GuildChatListener implements Listener {
     private final PlayerDao playerDao;
     private final GuildDao guildDao;
     private final FileConfiguration guildConfig;
+    private final GuildRelationManager relationManager;
 
-    public GuildChatListener(JavaPlugin plugin, PlayerDao playerDao, GuildDao guildDao, FileConfiguration guildConfig) {
+    public GuildChatListener(JavaPlugin plugin, PlayerDao playerDao, GuildDao guildDao, FileConfiguration guildConfig,
+                             GuildRelationManager relationManager) {
         this.plugin = plugin;
         this.playerDao = playerDao;
         this.guildDao = guildDao;
         this.guildConfig = guildConfig;
+        this.relationManager = relationManager;
     }
 
     @EventHandler
@@ -55,35 +59,35 @@ public class GuildChatListener implements Listener {
             Guild guild = guildOpt.get();
             GuildRank rank = data.getRank();
 
-            String format = guildConfig.getString("chat.format", "<dark_gray>[<aqua>{tag}</aqua>]{rank_letter} <white>{player}<gray>: ");
-            Component publicPrefix = buildPrefix(format, player, guild, rank, false);
-            Component guildPrefix = buildPrefix(format, player, guild, rank, true);
+            String format = guildConfig.getString("chat.format", "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
 
-            // Guild tag is visible to everyone on the global chat.
-            // Rank letter is visible only to members of the same guild.
             event.renderer((source, sourceDisplayName, message, viewer) -> {
+                UUID viewerGuildId = null;
                 if (viewer instanceof Player viewerPlayer) {
                     try {
                         Optional<PlayerData> viewerDataOpt = playerDao.findByUuid(viewerPlayer.getUniqueId());
-                        if (viewerDataOpt.isPresent() && sourceGuildId.equals(viewerDataOpt.get().getGuildId())) {
-                            return guildPrefix.append(message);
+                        if (viewerDataOpt.isPresent()) {
+                            viewerGuildId = viewerDataOpt.get().getGuildId();
                         }
                     } catch (SQLException e) {
                         plugin.getLogger().warning("Failed to resolve viewer guild for chat: " + e.getMessage());
                     }
                 }
-                return publicPrefix.append(message);
+                boolean sameGuild = sourceGuildId.equals(viewerGuildId);
+                Component prefix = buildPrefix(format, player, guild, rank, viewerGuildId, sameGuild);
+                return prefix.append(message);
             });
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to format guild chat for " + player.getName() + ": " + e.getMessage());
         }
     }
 
-    private Component buildPrefix(String format, Player player, Guild guild, GuildRank rank, boolean includeRankLetter) {
+    private Component buildPrefix(String format, Player player, Guild guild, GuildRank rank, UUID viewerGuildId, boolean includeRankLetter) {
         String rankLetter = getRankLetter(rank);
-        String rankLetterPart = includeRankLetter ? getRankLetterColor(rank) + rankLetter + "<reset>" : "";
+        String rankLetterPart = includeRankLetter ? getRankLetterColor(rank) + "[" + rankLetter + "]<reset>" : "";
+        String tagColor = relationManager.getColor(viewerGuildId, guild.getId());
         String processed = format
-                .replace("{tag}", guild.getTag())
+                .replace("{tag}", tagColor + guild.getTag() + closeColorTag(tagColor))
                 .replace("{guild}", guild.getName())
                 .replace("{rank_letter}", rankLetterPart)
                 .replace("{rank}", "")
@@ -129,6 +133,20 @@ public class GuildChatListener implements Listener {
         };
         String color = guildConfig.getString("chat.rank-letter-colors." + configKey, defaultColor);
         return color != null && !color.isBlank() ? color : defaultColor;
+    }
+
+    private String closeColorTag(String color) {
+        if (color == null || color.isBlank()) {
+            return "<reset>";
+        }
+        String trimmed = color.trim();
+        if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
+            String inner = trimmed.substring(1, trimmed.length() - 1).toLowerCase();
+            if (inner.matches("[a-z_]+") && !inner.startsWith("#")) {
+                return "</" + inner + ">";
+            }
+        }
+        return "<reset>";
     }
 
     private String rankConfigKey(GuildRank rank) {
