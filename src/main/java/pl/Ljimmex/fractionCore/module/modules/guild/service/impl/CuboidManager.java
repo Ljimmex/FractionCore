@@ -53,7 +53,7 @@ public class CuboidManager {
             }
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to load cuboids: " + e.getMessage());
-            e.printStackTrace();
+            context.plugin.getLogger().log(java.util.logging.Level.SEVERE, "Full stack trace", e);
         }
     }
 
@@ -140,7 +140,7 @@ public class CuboidManager {
             flags.put(guildId, new EnumMap<>(defaultFlags));
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to create default cuboid for guild " + guildId + ": " + e.getMessage());
-            e.printStackTrace();
+            context.plugin.getLogger().log(java.util.logging.Level.SEVERE, "Full stack trace", e);
         }
 
         return cuboid;
@@ -152,7 +152,7 @@ public class CuboidManager {
             context.guildFlagDao.deleteByGuild(guildId);
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to delete cuboid data for guild " + guildId + ": " + e.getMessage());
-            e.printStackTrace();
+            context.plugin.getLogger().log(java.util.logging.Level.SEVERE, "Full stack trace", e);
         }
 
         cuboids.removeIf(c -> c.getGuildId().equals(guildId));
@@ -176,7 +176,7 @@ public class CuboidManager {
             }
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to save cuboid flag " + type + " for guild " + guildId + ": " + e.getMessage());
-            e.printStackTrace();
+            context.plugin.getLogger().log(java.util.logging.Level.SEVERE, "Full stack trace", e);
         }
     }
 
@@ -289,12 +289,25 @@ public class CuboidManager {
     }
 
     private AccessLevel resolveAccess(Player player, UUID cuboidGuildId) {
+        Optional<PlayerGuildCache.Entry> cached = context.getPlayerGuildCache().get(player.getUniqueId());
+        if (cached.isPresent()) {
+            PlayerGuildCache.Entry entry = cached.get();
+            UUID playerGuildId = entry.guildId();
+            if (playerGuildId.equals(cuboidGuildId)) {
+                return entry.rank() == GuildRank.LEADER ? AccessLevel.LEADER : AccessLevel.MEMBER;
+            }
+            if (context.relationManager.getRelationType(playerGuildId, cuboidGuildId) == RelationType.ALLY) {
+                return AccessLevel.ALLY;
+            }
+            return AccessLevel.OUTSIDER;
+        }
+
         Optional<PlayerData> dataOpt;
         try {
             dataOpt = context.playerDao.findByUuid(player.getUniqueId());
         } catch (SQLException e) {
             context.plugin.getLogger().warning("Failed to resolve player data for cuboid check: " + e.getMessage());
-            dataOpt = Optional.empty();
+            return AccessLevel.OUTSIDER;
         }
 
         if (dataOpt.isEmpty()) {
@@ -302,6 +315,7 @@ public class CuboidManager {
         }
 
         PlayerData data = dataOpt.get();
+        context.getPlayerGuildCache().refresh(player.getUniqueId(), data);
         UUID playerGuildId = data.getGuildId();
 
         if (playerGuildId != null && playerGuildId.equals(cuboidGuildId)) {
@@ -341,15 +355,19 @@ public class CuboidManager {
     // ============================================================
 
     public boolean setCuboidFlag(Player player, String flagName, String valueName) {
+        SetCuboidFlagResult result = prepareSetCuboidFlag(player, flagName, valueName);
+        applySetCuboidFlagEffects(player, result);
+        return result.success();
+    }
+
+    public SetCuboidFlagResult prepareSetCuboidFlag(Player player, String flagName, String valueName) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return SetCuboidFlagResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, "guild.cuboid.flag.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return SetCuboidFlagResult.error("guild.cuboid.flag.error_no_permission", PlaceholderContext.of(player));
             }
 
             CuboidFlagType flagType;
@@ -358,20 +376,36 @@ public class CuboidManager {
                 flagType = CuboidFlagType.valueOf(flagName.toUpperCase());
                 flagValue = CuboidFlagValue.valueOf(valueName.toUpperCase());
             } catch (IllegalArgumentException e) {
-                context.send(player, "guild.cuboid.flag.error_invalid", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return SetCuboidFlagResult.error("guild.cuboid.flag.error_invalid", PlaceholderContext.of(player));
             }
 
             setFlag(data.getGuildId(), flagType, flagValue);
-            PlaceholderContext ctx = PlaceholderContext.of(player)
-                    .with("flag", flagType.name())
-                    .with("value", flagValue.name());
-            context.send(player, "guild.cuboid.flag.success", MessageType.SUCCESS, ctx);
-            return true;
+            return new SetCuboidFlagResult(true, flagType, flagValue, null, PlaceholderContext.empty());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to set cuboid flag: " + e.getMessage());
-            context.send(player, "guild.cuboid.flag.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return SetCuboidFlagResult.error("guild.cuboid.flag.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void applySetCuboidFlagEffects(Player player, SetCuboidFlagResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        PlaceholderContext ctx = PlaceholderContext.of(player)
+                .with("flag", result.flagType().name())
+                .with("value", result.flagValue().name());
+        context.send(player, "guild.cuboid.flag.success", MessageType.SUCCESS, ctx);
+    }
+
+    public java.util.concurrent.CompletableFuture<SetCuboidFlagResult> setCuboidFlagAsync(Player player, String flagName, String valueName) {
+        return context.databaseExecutor.supplyAsync(() -> prepareSetCuboidFlag(player, flagName, valueName));
+    }
+
+    public record SetCuboidFlagResult(boolean success, CuboidFlagType flagType, CuboidFlagValue flagValue,
+                                       String errorKey, PlaceholderContext errorContext) {
+        public static SetCuboidFlagResult error(String key, PlaceholderContext context) {
+            return new SetCuboidFlagResult(false, null, null, key, context);
         }
     }
 
@@ -410,8 +444,14 @@ public class CuboidManager {
     }
 
     public Optional<UUID> getPlayerGuildId(Player player) {
+        Optional<PlayerGuildCache.Entry> cached = context.getPlayerGuildCache().get(player.getUniqueId());
+        if (cached.isPresent()) {
+            return Optional.of(cached.get().guildId());
+        }
+
         try {
             Optional<PlayerData> data = context.playerDao.findByUuid(player.getUniqueId());
+            data.ifPresent(playerData -> context.getPlayerGuildCache().refresh(player.getUniqueId(), playerData));
             return data.map(PlayerData::getGuildId);
         } catch (SQLException e) {
             context.plugin.getLogger().warning("Failed to resolve player guild: " + e.getMessage());

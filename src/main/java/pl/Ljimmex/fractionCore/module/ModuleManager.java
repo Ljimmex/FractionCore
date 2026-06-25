@@ -92,7 +92,7 @@ public class ModuleManager {
             return true;
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to enable module '" + module.getName() + "': " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Full stack trace", e);
             module.setState(ModuleState.DISABLED);
             return false;
         }

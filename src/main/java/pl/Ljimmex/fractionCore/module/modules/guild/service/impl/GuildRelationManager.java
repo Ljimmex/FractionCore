@@ -1,7 +1,8 @@
 package pl.Ljimmex.fractionCore.module.modules.guild.service.impl;
 
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import pl.Ljimmex.fractionCore.database.entity.Guild;
@@ -14,12 +15,18 @@ import pl.Ljimmex.fractionCore.lang.PlaceholderContext;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GuildRelationManager {
 
+    private static final long RELATION_CACHE_TTL_MS = 30_000;
+
     private final GuildContext context;
+    private final Map<RelationKey, CachedRelation> relationCache = new ConcurrentHashMap<>();
 
     public GuildRelationManager(GuildContext context) {
         this.context = context;
@@ -36,14 +43,54 @@ public class GuildRelationManager {
         if (viewerGuildId.equals(targetGuildId)) {
             return RelationType.NEUTRAL; // callers handle member separately
         }
+
+        RelationKey key = new RelationKey(viewerGuildId, targetGuildId);
+        CachedRelation cached = relationCache.get(key);
+        long now = System.currentTimeMillis();
+        if (cached != null && now - cached.timestamp < RELATION_CACHE_TTL_MS) {
+            return cached.type;
+        }
+
         try {
-            return context.guildRelationDao.find(viewerGuildId, targetGuildId)
+            RelationType type = context.guildRelationDao.find(viewerGuildId, targetGuildId)
                     .map(GuildRelation::getType)
                     .orElse(RelationType.NEUTRAL);
+            relationCache.put(key, new CachedRelation(type, now));
+            return type;
         } catch (SQLException e) {
             context.plugin.getLogger().warning("Failed to resolve relation type: " + e.getMessage());
             return RelationType.NEUTRAL;
         }
+    }
+
+    public void clearCache() {
+        relationCache.clear();
+    }
+
+    private record RelationKey(UUID a, UUID b) {
+        RelationKey {
+            // Canonical ordering so (a,b) and (b,a) share the same key.
+            if (a.compareTo(b) > 0) {
+                UUID tmp = a;
+                a = b;
+                b = tmp;
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof RelationKey that)) return false;
+            return Objects.equals(a, that.a) && Objects.equals(b, that.b);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a, b);
+        }
+    }
+
+    private record CachedRelation(RelationType type, long timestamp) {
     }
 
     public String getColor(UUID viewerGuildId, UUID targetGuildId) {
@@ -89,98 +136,132 @@ public class GuildRelationManager {
     // ============================================================
 
     public boolean sendAllyRequest(Player player, String tag) {
+        AllyRequestResult result = prepareSendAllyRequest(player, tag);
+        applySendAllyRequestEffects(player, result);
+        return result.success();
+    }
+
+    public AllyRequestResult prepareSendAllyRequest(Player player, String tag) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyRequestResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, "guild.ally.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyRequestResult.error("guild.ally.error_no_permission", PlaceholderContext.of(player));
             }
             Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
             if (targetOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyRequestResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             Guild ownGuild = context.guildDao.findById(data.getGuildId()).orElse(null);
             Guild targetGuild = targetOpt.get();
             if (ownGuild == null) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyRequestResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             if (ownGuild.getId().equals(targetGuild.getId())) {
-                context.send(player, "guild.ally.error_self", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyRequestResult.error("guild.ally.error_self", PlaceholderContext.of(player));
             }
             RelationType current = getRelationType(ownGuild.getId(), targetGuild.getId());
             if (current == RelationType.ALLY) {
-                context.send(player, "guild.ally.error_already_ally", MessageType.ERROR,
+                return AllyRequestResult.error("guild.ally.error_already_ally",
                         PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-                return false;
             }
             if (context.guildAllyRequestDao.exists(ownGuild.getId(), targetGuild.getId())) {
-                context.send(player, "guild.ally.error_request_already_sent", MessageType.ERROR,
+                return AllyRequestResult.error("guild.ally.error_request_already_sent",
                         PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-                return false;
             }
             Optional<GuildAllyRequest> incoming = context.guildAllyRequestDao.find(targetGuild.getId(), ownGuild.getId());
             if (incoming.isPresent()) {
-                return acceptAllyInternal(player, ownGuild, targetGuild);
+                AllyAcceptResult acceptResult = prepareAcceptAllyInternal(player, ownGuild, targetGuild);
+                return new AllyRequestResult(true, ownGuild, targetGuild, false, acceptResult, null, PlaceholderContext.empty());
             }
             GuildAllyRequest request = new GuildAllyRequest(
-                    0, ownGuild.getId(), targetGuild.getId(), System.currentTimeMillis() / 1000
+                    0, ownGuild.getId(), targetGuild.getId(), TimeUtil.currentEpochSeconds()
             );
             context.guildAllyRequestDao.save(request);
-            context.send(player, "guild.ally.request_sent", MessageType.SUCCESS,
-                    PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-            Component message = context.langManager.getMessage("guild.ally.request_received", MessageType.INFO,
-                    PlaceholderContext.of(player, ownGuild).with("guild", ownGuild.getName()).with("tag", ownGuild.getTag()).with("player", player.getName()));
-            context.broadcastToGuild(targetGuild.getId(), message, null);
-            return true;
+            return new AllyRequestResult(true, ownGuild, targetGuild, true, null, null, PlaceholderContext.empty());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to send ally request: " + e.getMessage());
-            context.send(player, "guild.ally.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return AllyRequestResult.error("guild.ally.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void applySendAllyRequestEffects(Player player, AllyRequestResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        if (result.autoAccept() != null) {
+            applyAcceptAllyEffects(player, result.autoAccept());
+            return;
+        }
+        Guild ownGuild = result.ownGuild();
+        Guild targetGuild = result.targetGuild();
+        context.send(player, "guild.ally.request_sent", MessageType.SUCCESS,
+                PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
+        Component message = context.langManager.getMessage("guild.ally.request_received", MessageType.INFO,
+                PlaceholderContext.of(player, ownGuild).with("guild", ownGuild.getName()).with("tag", ownGuild.getTag()).with("player", player.getName()));
+        context.broadcastToGuild(targetGuild.getId(), message, null);
+    }
+
+    public java.util.concurrent.CompletableFuture<AllyRequestResult> sendAllyRequestAsync(Player player, String tag) {
+        return context.databaseExecutor.supplyAsync(() -> prepareSendAllyRequest(player, tag));
+    }
+
+    public record AllyRequestResult(boolean success, Guild ownGuild, Guild targetGuild, boolean requestSent,
+                                     AllyAcceptResult autoAccept, String errorKey, PlaceholderContext errorContext) {
+        public static AllyRequestResult error(String key, PlaceholderContext context) {
+            return new AllyRequestResult(false, null, null, false, null, key, context);
         }
     }
 
     public boolean acceptAllyRequest(Player player, String tag) {
+        AllyAcceptResult result = prepareAcceptAllyRequest(player, tag);
+        applyAcceptAllyEffects(player, result);
+        return result.success();
+    }
+
+    public AllyAcceptResult prepareAcceptAllyRequest(Player player, String tag) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyAcceptResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, "guild.ally.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyAcceptResult.error("guild.ally.error_no_permission", PlaceholderContext.of(player));
             }
             Optional<Guild> ownOpt = context.guildDao.findById(data.getGuildId());
             Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
             if (ownOpt.isEmpty() || targetOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyAcceptResult.error("guild.not_found", PlaceholderContext.of(player));
             }
-            return acceptAllyInternal(player, ownOpt.get(), targetOpt.get());
+            return prepareAcceptAllyInternal(player, ownOpt.get(), targetOpt.get());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to accept ally request: " + e.getMessage());
-            context.send(player, "guild.ally.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return AllyAcceptResult.error("guild.ally.error_generic", PlaceholderContext.of(player));
         }
     }
 
-    private boolean acceptAllyInternal(Player player, Guild ownGuild, Guild targetGuild) throws SQLException {
+    private AllyAcceptResult prepareAcceptAllyInternal(Player player, Guild ownGuild, Guild targetGuild) throws SQLException {
         Optional<GuildAllyRequest> requestOpt = context.guildAllyRequestDao.find(targetGuild.getId(), ownGuild.getId());
         if (requestOpt.isEmpty()) {
-            context.send(player, "guild.ally.error_no_request", MessageType.ERROR,
+            return AllyAcceptResult.error("guild.ally.error_no_request",
                     PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-            return false;
         }
         context.guildAllyRequestDao.delete(targetGuild.getId(), ownGuild.getId());
         context.guildRelationDao.setType(ownGuild.getId(), targetGuild.getId(), RelationType.ALLY);
+        clearCache();
+        return new AllyAcceptResult(true, ownGuild, targetGuild, null, PlaceholderContext.empty());
+    }
 
+    public void applyAcceptAllyEffects(Player player, AllyAcceptResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        Guild ownGuild = result.ownGuild();
+        Guild targetGuild = result.targetGuild();
         PlaceholderContext ctx = PlaceholderContext.of(player, ownGuild)
                 .with("guild", ownGuild.getName()).with("tag", ownGuild.getTag())
                 .with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag());
@@ -197,42 +278,72 @@ public class GuildRelationManager {
         context.broadcastToGuild(targetGuild.getId(), targetBroadcast, null);
 
         context.tagManager.updateAllTags();
-        return true;
+    }
+
+    public java.util.concurrent.CompletableFuture<AllyAcceptResult> acceptAllyRequestAsync(Player player, String tag) {
+        return context.databaseExecutor.supplyAsync(() -> prepareAcceptAllyRequest(player, tag));
+    }
+
+    public record AllyAcceptResult(boolean success, Guild ownGuild, Guild targetGuild,
+                                    String errorKey, PlaceholderContext errorContext) {
+        public static AllyAcceptResult error(String key, PlaceholderContext context) {
+            return new AllyAcceptResult(false, null, null, key, context);
+        }
     }
 
     public boolean declineAllyRequest(Player player, String tag) {
+        AllyDeclineResult result = prepareDeclineAllyRequest(player, tag);
+        applyDeclineAllyEffects(player, result);
+        return result.success();
+    }
+
+    public AllyDeclineResult prepareDeclineAllyRequest(Player player, String tag) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyDeclineResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, "guild.ally.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyDeclineResult.error("guild.ally.error_no_permission", PlaceholderContext.of(player));
             }
             Optional<Guild> ownOpt = context.guildDao.findById(data.getGuildId());
             Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
             if (ownOpt.isEmpty() || targetOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return AllyDeclineResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             Guild ownGuild = ownOpt.get();
             Guild targetGuild = targetOpt.get();
             Optional<GuildAllyRequest> requestOpt = context.guildAllyRequestDao.find(targetGuild.getId(), ownGuild.getId());
             if (requestOpt.isEmpty()) {
-                context.send(player, "guild.ally.error_no_request", MessageType.ERROR,
+                return AllyDeclineResult.error("guild.ally.error_no_request",
                         PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-                return false;
             }
             context.guildAllyRequestDao.delete(targetGuild.getId(), ownGuild.getId());
-            context.send(player, "guild.ally.decline_success", MessageType.SUCCESS,
-                    PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
-            return true;
+            return new AllyDeclineResult(true, targetGuild, null, PlaceholderContext.empty());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to decline ally request: " + e.getMessage());
-            context.send(player, "guild.ally.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return AllyDeclineResult.error("guild.ally.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void applyDeclineAllyEffects(Player player, AllyDeclineResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        Guild targetGuild = result.targetGuild();
+        context.send(player, "guild.ally.decline_success", MessageType.SUCCESS,
+                PlaceholderContext.of(player, targetGuild).with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag()));
+    }
+
+    public java.util.concurrent.CompletableFuture<AllyDeclineResult> declineAllyRequestAsync(Player player, String tag) {
+        return context.databaseExecutor.supplyAsync(() -> prepareDeclineAllyRequest(player, tag));
+    }
+
+    public record AllyDeclineResult(boolean success, Guild targetGuild,
+                                     String errorKey, PlaceholderContext errorContext) {
+        public static AllyDeclineResult error(String key, PlaceholderContext context) {
+            return new AllyDeclineResult(false, null, key, context);
         }
     }
 
@@ -241,45 +352,90 @@ public class GuildRelationManager {
     // ============================================================
 
     public boolean setEnemy(Player player, String tag) {
-        return setRelation(player, tag, RelationType.ENEMY, "guild.enemy");
+        RelationChangeResult result = prepareSetRelation(player, tag, RelationType.ENEMY, "guild.enemy");
+        applyRelationChangeEffects(player, result, "guild.enemy");
+        return result.success();
     }
 
     public boolean setNeutral(Player player, String tag) {
-        return removeRelation(player, tag, "guild.neutral");
+        RelationChangeResult result = prepareRemoveRelation(player, tag, "guild.neutral");
+        applyRelationChangeEffects(player, result, "guild.neutral");
+        return result.success();
     }
 
-    private boolean setRelation(Player player, String tag, RelationType type, String langPrefix) {
+    private RelationChangeResult prepareSetRelation(Player player, String tag, RelationType type, String langPrefix) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationChangeResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, langPrefix + ".error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationChangeResult.error(langPrefix + ".error_no_permission", PlaceholderContext.of(player));
             }
             Optional<Guild> ownOpt = context.guildDao.findById(data.getGuildId());
             Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
             if (ownOpt.isEmpty() || targetOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationChangeResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             Guild ownGuild = ownOpt.get();
             Guild targetGuild = targetOpt.get();
             if (ownGuild.getId().equals(targetGuild.getId())) {
-                context.send(player, langPrefix + ".error_self", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationChangeResult.error(langPrefix + ".error_self", PlaceholderContext.of(player));
             }
             context.guildRelationDao.setType(ownGuild.getId(), targetGuild.getId(), type);
+            clearCache();
             context.guildAllyRequestDao.delete(ownGuild.getId(), targetGuild.getId());
             context.guildAllyRequestDao.delete(targetGuild.getId(), ownGuild.getId());
+            return new RelationChangeResult(true, ownGuild, targetGuild, null, PlaceholderContext.empty());
+        } catch (SQLException e) {
+            context.plugin.getLogger().severe("Failed to set relation: " + e.getMessage());
+            return RelationChangeResult.error(langPrefix + ".error_generic", PlaceholderContext.of(player));
+        }
+    }
 
-            PlaceholderContext ctx = PlaceholderContext.of(player, ownGuild)
-                    .with("guild", ownGuild.getName()).with("tag", ownGuild.getTag())
-                    .with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag());
-            context.send(player, langPrefix + ".success", MessageType.SUCCESS, ctx);
+    private RelationChangeResult prepareRemoveRelation(Player player, String tag, String langPrefix) {
+        try {
+            PlayerData data = context.getOrCreatePlayerData(player);
+            if (data.getGuildId() == null) {
+                return RelationChangeResult.error("guild.no_guild", PlaceholderContext.of(player));
+            }
+            if (!context.isLeaderOrCoLeader(data.getRank())) {
+                return RelationChangeResult.error(langPrefix + ".error_no_permission", PlaceholderContext.of(player));
+            }
+            Optional<Guild> ownOpt = context.guildDao.findById(data.getGuildId());
+            Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
+            if (ownOpt.isEmpty() || targetOpt.isEmpty()) {
+                return RelationChangeResult.error("guild.not_found", PlaceholderContext.of(player));
+            }
+            Guild ownGuild = ownOpt.get();
+            Guild targetGuild = targetOpt.get();
+            if (ownGuild.getId().equals(targetGuild.getId())) {
+                return RelationChangeResult.error(langPrefix + ".error_self", PlaceholderContext.of(player));
+            }
+            context.guildRelationDao.delete(ownGuild.getId(), targetGuild.getId());
+            clearCache();
+            context.guildAllyRequestDao.delete(ownGuild.getId(), targetGuild.getId());
+            context.guildAllyRequestDao.delete(targetGuild.getId(), ownGuild.getId());
+            return new RelationChangeResult(true, ownGuild, targetGuild, null, PlaceholderContext.empty());
+        } catch (SQLException e) {
+            context.plugin.getLogger().severe("Failed to remove relation: " + e.getMessage());
+            return RelationChangeResult.error(langPrefix + ".error_generic", PlaceholderContext.of(player));
+        }
+    }
 
+    public void applyRelationChangeEffects(Player player, RelationChangeResult result, String langPrefix) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        Guild ownGuild = result.ownGuild();
+        Guild targetGuild = result.targetGuild();
+        PlaceholderContext ctx = PlaceholderContext.of(player, ownGuild)
+                .with("guild", ownGuild.getName()).with("tag", ownGuild.getTag())
+                .with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag());
+        context.send(player, langPrefix + ".success", MessageType.SUCCESS, ctx);
+
+        if (langPrefix.equals("guild.enemy")) {
             Component ownBroadcast = context.langManager.getMessage(langPrefix + ".broadcast", MessageType.WARNING,
                     ctx.with("player", player.getName()));
             context.broadcastToGuild(ownGuild.getId(), ownBroadcast, player);
@@ -289,54 +445,23 @@ public class GuildRelationManager {
                             .with("guild", ownGuild.getName()).with("tag", ownGuild.getTag())
                             .with("player", player.getName()));
             context.broadcastToGuild(targetGuild.getId(), targetBroadcast, null);
-
-            context.tagManager.updateAllTags();
-            return true;
-        } catch (SQLException e) {
-            context.plugin.getLogger().severe("Failed to set relation: " + e.getMessage());
-            context.send(player, langPrefix + ".error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
         }
+
+        context.tagManager.updateAllTags();
     }
 
-    private boolean removeRelation(Player player, String tag, String langPrefix) {
-        try {
-            PlayerData data = context.getOrCreatePlayerData(player);
-            if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
-            }
-            if (!context.isLeaderOrCoLeader(data.getRank())) {
-                context.send(player, langPrefix + ".error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
-            }
-            Optional<Guild> ownOpt = context.guildDao.findById(data.getGuildId());
-            Optional<Guild> targetOpt = context.guildDao.findByTag(tag.toUpperCase());
-            if (ownOpt.isEmpty() || targetOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
-            }
-            Guild ownGuild = ownOpt.get();
-            Guild targetGuild = targetOpt.get();
-            if (ownGuild.getId().equals(targetGuild.getId())) {
-                context.send(player, langPrefix + ".error_self", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
-            }
-            context.guildRelationDao.delete(ownGuild.getId(), targetGuild.getId());
-            context.guildAllyRequestDao.delete(ownGuild.getId(), targetGuild.getId());
-            context.guildAllyRequestDao.delete(targetGuild.getId(), ownGuild.getId());
+    public java.util.concurrent.CompletableFuture<RelationChangeResult> setEnemyAsync(Player player, String tag) {
+        return context.databaseExecutor.supplyAsync(() -> prepareSetRelation(player, tag, RelationType.ENEMY, "guild.enemy"));
+    }
 
-            PlaceholderContext ctx = PlaceholderContext.of(player, ownGuild)
-                    .with("guild", ownGuild.getName()).with("tag", ownGuild.getTag())
-                    .with("target", targetGuild.getName()).with("target_tag", targetGuild.getTag());
-            context.send(player, langPrefix + ".success", MessageType.SUCCESS, ctx);
+    public java.util.concurrent.CompletableFuture<RelationChangeResult> setNeutralAsync(Player player, String tag) {
+        return context.databaseExecutor.supplyAsync(() -> prepareRemoveRelation(player, tag, "guild.neutral"));
+    }
 
-            context.tagManager.updateAllTags();
-            return true;
-        } catch (SQLException e) {
-            context.plugin.getLogger().severe("Failed to remove relation: " + e.getMessage());
-            context.send(player, langPrefix + ".error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+    public record RelationChangeResult(boolean success, Guild ownGuild, Guild targetGuild,
+                                        String errorKey, PlaceholderContext errorContext) {
+        public static RelationChangeResult error(String key, PlaceholderContext context) {
+            return new RelationChangeResult(false, null, null, key, context);
         }
     }
 
@@ -345,22 +470,43 @@ public class GuildRelationManager {
     // ============================================================
 
     public boolean sendRelationsList(Player player) {
+        RelationsListResult result = fetchRelationsList(player);
+        renderRelationsList(player, result);
+        return result.success();
+    }
+
+    public RelationsListResult fetchRelationsList(Player player) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationsListResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             Optional<Guild> guildOpt = context.guildDao.findById(data.getGuildId());
             if (guildOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return RelationsListResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             Guild guild = guildOpt.get();
             List<GuildRelation> relations = context.guildRelationDao.findByGuild(guild.getId());
+            List<GuildAllyRequest> incoming = context.guildAllyRequestDao.findByTargetGuild(guild.getId());
+            return new RelationsListResult(true, guild, relations, incoming, null, PlaceholderContext.empty());
+        } catch (SQLException e) {
+            context.plugin.getLogger().severe("Failed to list relations: " + e.getMessage());
+            return RelationsListResult.error("guild.relations.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void renderRelationsList(Player player, RelationsListResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        try {
+            Guild guild = result.guild();
+            List<GuildRelation> relations = result.relations();
+            List<GuildAllyRequest> incoming = result.incomingRequests();
 
             PlaceholderContext ctx = PlaceholderContext.of(player, guild).with("guild", guild.getName()).with("tag", guild.getTag());
-            player.sendMessage(Component.text("=== Relacje gildii " + guild.getName() + " [" + guild.getTag() + "] ===").color(NamedTextColor.GOLD));
+            player.sendMessage(context.langManager.getMessage("guild.relations.list_header", MessageType.INFO, ctx));
 
             boolean hasAllies = false;
             boolean hasEnemies = false;
@@ -388,9 +534,8 @@ public class GuildRelationManager {
                 player.sendMessage(context.langManager.getMessage("guild.relations.no_enemies", MessageType.INFO, ctx));
             }
 
-            List<GuildAllyRequest> incoming = context.guildAllyRequestDao.findByTargetGuild(guild.getId());
             if (!incoming.isEmpty()) {
-                player.sendMessage(Component.text("Oczekujace propozycje sojuszu:").color(NamedTextColor.YELLOW));
+                player.sendMessage(context.langManager.getMessage("guild.relations.incoming_requests_header", MessageType.INFO, ctx));
                 for (GuildAllyRequest request : incoming) {
                     Optional<Guild> senderOpt = context.guildDao.findById(request.getGuildId());
                     if (senderOpt.isEmpty()) {
@@ -401,11 +546,21 @@ public class GuildRelationManager {
                             ctx.with("target", sender.getName()).with("target_tag", sender.getTag())));
                 }
             }
-            return true;
         } catch (SQLException e) {
-            context.plugin.getLogger().severe("Failed to list relations: " + e.getMessage());
+            context.plugin.getLogger().severe("Failed to render relations list: " + e.getMessage());
             context.send(player, "guild.relations.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+        }
+    }
+
+    public java.util.concurrent.CompletableFuture<RelationsListResult> sendRelationsListAsync(Player player) {
+        return context.databaseExecutor.supplyAsync(() -> fetchRelationsList(player));
+    }
+
+    public record RelationsListResult(boolean success, Guild guild, List<GuildRelation> relations,
+                                       List<GuildAllyRequest> incomingRequests,
+                                       String errorKey, PlaceholderContext errorContext) {
+        public static RelationsListResult error(String key, PlaceholderContext context) {
+            return new RelationsListResult(false, null, List.of(), List.of(), key, context);
         }
     }
 }

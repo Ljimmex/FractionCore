@@ -18,10 +18,39 @@ general:
   unknown_command: "Nieznana komenda. Uzyj /guild help, aby zobaczyc dostepne komendy."
   reload_success: "Przeladowano {count} plikow jezykowych."
   reload_error: "Wystapil blad podczas przeladowywania jezyka: {error}"
+  missing_translation: "<red>[Brak tlumaczenia: {key}]"
 
 guild:
   create:
     success: "<green>Gildia zostala zalozona pomyslnie!</green>"
+    announcement: "<yellow>Gildia <aqua>{guild}</aqua> <dark_gray>[<yellow>{tag}</yellow><dark_gray>] zostala zalozona przez <aqua>{player}</aqua><yellow>!"
+    preview:
+      title: "<gold>=== PODSUMOWANIE ZAKLADANIA GILDII ==="
+      name_label: "<gray>Nazwa: "
+      tag_label: "<gray>Tag: "
+      status_ok: "<green>Wszystko jest git. Wpisz /guild create confirm, aby potwierdzic."
+      status_error: "<red>Blad: {reason}"
+      cost_header: "<yellow>Koszt:"
+      cost_entry: "<gray>- {material}: "
+      result:
+        ok: "OK"
+        invalid_name: "nieprawidlowa nazwa"
+        name_too_short: "za krotka nazwa"
+        name_too_long: "za dluga nazwa"
+        invalid_tag: "nieprawidlowy tag"
+        tag_too_short: "za krotki tag"
+        tag_too_long: "za dlugi tag"
+        name_taken: "nazwa zajeta"
+        tag_taken: "tag zajety"
+        insufficient_items: "brak itemow"
+        already_in_guild: "nalezysz juz do gildii"
+        cooldown: "cooldown"
+        blocked_world: "zablokowany swiat"
+        too_close_to_spawn: "za blisko spawnu"
+        too_close_to_other_guild: "za blisko innej gildii"
+        invalid_location: "nieprawidlowa lokalizacja"
+        error: "blad systemu"
+        no_pending_request: "brak oczekujacego zadania"
     error_name_taken: "Gildia o nazwie <red>{name}</red> juz istnieje!"
     error_tag_taken: "Tag <red>[{tag}]</red> jest juz zajety!"
     error_name_invalid: "<red>Niedozwolone znaki w nazwie!</red> Wpisales: <yellow>{name}</yellow>. <gray>Dozwolone: litery, cyfry, spacje, _</gray>"
@@ -217,6 +246,8 @@ guild:
     no_allies: "<gray>Brak sojusznikow."
     no_enemies: "<gray>Brak wrogow."
     error_generic: "<red>Wystapil blad podczas pobierania relacji.</red>"
+    list_header: "<gold>=== Relacje gildii {guild} [{tag}] ==="
+    incoming_requests_header: "<yellow>Oczekujace propozycje sojuszu:"
   cuboid:
     protection:
       denied: "<red>Nie masz uprawnien do tej akcji na tym terenie."
@@ -231,6 +262,123 @@ guild:
   not_found: "<red>Nie znaleziono gildii.</red>"
   no_guild: "<red>Nie nalezysz do zadnej gildii.</red>"
   not_member: "<red>Gracz {player} nie jest czlonkiem twojej gildii.</red>"
+
+  help:
+    # Pomoc uzywa blokow |- aby jeden klucz zawieral wiele linii.
+    # Dzieki temu nie trzeba tworzyc osobnego klucza dla kazdej linii.
+    separator: "&8&m----------------------------------------"
+    main:
+      title: "&6&lFractionCore &8» &ePomoc"
+      welcome: "&7Witaj w panelu pomocy pluginu!"
+      available_commands: "&6Dostępne komendy:"
+      info_header: "&6Informacje:"
+      plugin: "&7Plugin: &eFractionCore"
+      version: "&7Wersja: &e{version}"
+      author: "&7Autor: &e{author}"
+      lines: |-
+        &e/guild help &8- &7Wyświetla tę pomoc
+        &e/guild help guild &8- &7Komendy gildii
+        &e/guild help admin &8- &7Komendy administratora
+        &e/guild create <nazwa> <tag> &8- &7Załóż gildię
+        &e/guild invite <nick> &8- &7Zaproś gracza
+        &e/guild join <tag> &8- &7Dołącz do gildii
+        &e/guild leave &8- &7Opuść gildię
+        &e/guild info [tag] &8- &7Informacje o gildii
+        &e/guild home &8- &7Teleport do domu gildii
+    guild:
+      title: "&6&lFractionCore &8» &ePomoc Gildii"
+      subtitle: "&7Komendy dostępne dla członków gildii."
+      lines: |-
+        &6Zakładanie:
+        &e/guild create <nazwa> <tag> &8- &7Rozpocznij zakładanie gildii
+        &e/guild create confirm &8- &7Potwierdź założenie gildii
+        &6Członkowie:
+        &e/guild invite <nick> &8- &7Zaproś gracza
+        &e/guild invite cancel &8- &7Anuluj wysłane zaproszenia
+        &e/guild invite decline <tag> &8- &7Odrzuć zaproszenie
+        &e/guild join <tag> &8- &7Dołącz do gildii
+        &e/guild leave &8- &7Opuść gildię
+        &e/guild kick <nick> &8- &7Wyrzuć członka
+        &6Rangi:
+        &e/guild promote <nick> [ranga] &8- &7Awansuj członka
+        &e/guild demote <nick> [ranga] &8- &7Degraduj członka
+        &e/guild leader <nick> &8- &7Przekaż przywództwo
+        &6Zarządzanie:
+        &e/guild sethome &8- &7Ustaw dom gildii
+        &e/guild home &8- &7Teleportuj do domu gildii
+        &e/guild description <tekst> &8- &7Ustaw opis gildii
+        &e/guild flag <flaga> <true/false> &8- &7Zmień flagę gildii
+        &e/guild ban <nick> [powód] &8- &7Zbanuj gracza
+        &e/guild unban <nick> &8- &7Odbanuj gracza
+        &e/guild banlist &8- &7Lista zbanowanych
+        &e/guild requests &8- &7Lista próśb o dołączenie
+        &e/guild joinaccept <nick> &8- &7Przyjmij prośbę
+        &e/guild joindecline <nick> &8- &7Odrzuć prośbę
+        &e/guild disband &8- &7Rozwiąż gildię
+        &e/guild disband confirm &8- &7Potwierdź rozwiązanie
+        &6Relacje:
+        &e/guild ally <tag> &8- &7Wyślij prośbę o sojusz
+        &e/guild allyaccept <tag> &8- &7Zaakceptuj sojusz
+        &e/guild allydecline <tag> &8- &7Odrzuć prośbę o sojusz
+        &e/guild enemy <tag> &8- &7Ustal wrogość
+        &e/guild neutral <tag> &8- &7Ustal relację neutralną
+        &e/guild relations &8- &7Lista sojuszników i wrogów
+        &6Cuboid:
+        &e/guild cuboidflag [flaga] [wartość] &8- &7Zarządzaj flagami cuboidu
+        &e/guild info [tag] &8- &7Informacje o gildii
+    admin:
+      title: "&6&lFractionCore &8» &ePomoc Administratora"
+      subtitle: "&7Komendy zarządzania pluginem."
+      lines: |-
+        &e/guild admin module <list|enable|disable|reload> [moduł] &8- &7Zarządzaj modułami
+        &e/guild admin lang <reload|reset> &8- &7Przeładuj / resetuj języki
+        &e/guild admin reload &8- &7Przeładuj konfigurację
+        &e/guild admin debug <true|false> &8- &7Tryb debug
+        &e/guild admin plugin reload &8- &7Przeładuj plugin (wymaga PlugMan)
+  usage:
+    base: "&eUzycie: {usage}"
+    create: "&eUzycie: /guild create <nazwa> <tag>"
+    create_confirm: "&eNastepnie: /guild create confirm"
+    flag: "&eUzycie: /guild flag <flaga> <true/false>"
+    flag_available: "&eDostepne flagi: public, allow-join-requests, show-home"
+    cuboid: "&eUzycie: /guild cuboidflag <flaga> <wartosc>"
+    cuboid_available_flags: "&eDostepne flagi: BUILD, DESTROY, USE, TNT, INTERACT, FRIENDLY_FIRE"
+    cuboid_available_values: "&eDostepne wartosci: ALLOW, DENY, MEMBERS, ALLIES, LEADER"
+  error:
+    player_only: "<red>Tej komendy moze uzyc tylko gracz.</red>"
+    player_not_online: "<red>Gracz nie jest online.</red>"
+    no_permission: "<red>Nie masz uprawnien.</red>"
+  admin:
+    module_list:
+      header: "&6=== MODUŁY ==="
+      entry: "<{state_color}>- {module} [{state}]"
+    module:
+      enabled: "&aWlaczono modul '{module}'."
+      enable_failed: "&cNie udalo sie wlaczyc modulu '{module}'."
+      disabled: "&aWylaczono modul '{module}'."
+      disable_failed: "&cNie udalo sie wylaczyc modulu '{module}'."
+      reloaded: "&aPrzeladowano modul '{module}'."
+      reload_failed: "&cNie udalo sie przeladowac modulu '{module}'."
+      reload_all_success: "&aPrzeladowano wszystkie moduly."
+    lang:
+      module_inactive: "<red>Modul jezykowy nie jest aktywny.</red>"
+      reload_success: "&aPrzeladowano pliki jezykowe."
+      reset_success: "&aZresetowano pliki jezykowe do domyslnych."
+    reload_success: "&aPrzeladowano wszystkie pliki konfiguracyjne i moduly."
+    debug:
+      enabled: "&aTryb debug: wlaczony"
+      disabled: "&aTryb debug: wylaczony"
+    plugin:
+      plugman_missing: "<red>Aby przeladowac plugin bez restartu, zainstaluj PlugMan (lub podobny plugin-manager).</red>"
+      reload_success: "&aPrzeladowano plugin FractionCore za pomoca PlugMan."
+    usage:
+      header: "&6=== ADMIN FRACTIONCORE ==="
+      lines: |-
+        &e/guild admin module <list|enable|disable|reload> [moduł] &8- &7Zarządzaj modułami
+        &e/guild admin lang <reload|reset> &8- &7Przeładuj / resetuj języki
+        &e/guild admin reload &8- &7Przeładuj konfigurację
+        &e/guild admin debug <true|false> &8- &7Tryb debug
+        &e/guild admin plugin reload &8- &7Przeładuj plugin (wymaga PlugMan)
 
 egg:
   damaged: "<red><bold>UWAGA!</bold></red> Jajo twojej gildii zostalo uszkodzone! Pozostalo <yellow>{lives}/{max_lives}</yellow> zyc."

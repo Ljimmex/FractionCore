@@ -3,6 +3,7 @@ package pl.Ljimmex.fractionCore.module.modules;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.FractionCore;
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
+import pl.Ljimmex.fractionCore.database.async.DatabaseExecutor;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildActivityLogDao;
@@ -36,6 +37,7 @@ import java.sql.SQLException;
 public class DatabaseModule extends BaseModule {
 
     private DatabaseManager databaseManager;
+    private DatabaseExecutor databaseExecutor;
     private GuildDao guildDao;
     private PlayerDao playerDao;
     private CuboidDao cuboidDao;
@@ -61,6 +63,7 @@ public class DatabaseModule extends BaseModule {
 
     @Override
     public void onEnable() {
+        databaseExecutor = new DatabaseExecutor(getPlugin());
         databaseManager = new DatabaseManager(getPlugin());
         databaseManager.loadConfiguration(((FractionCore) getPlugin()).getConfigManager().getDatabaseConfig());
         try {
@@ -89,10 +92,17 @@ public class DatabaseModule extends BaseModule {
         if (databaseManager != null) {
             databaseManager.disconnect();
         }
+        if (databaseExecutor != null) {
+            databaseExecutor.shutdown();
+        }
     }
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public DatabaseExecutor getDatabaseExecutor() {
+        return databaseExecutor;
     }
 
     public GuildDao getGuildDao() {

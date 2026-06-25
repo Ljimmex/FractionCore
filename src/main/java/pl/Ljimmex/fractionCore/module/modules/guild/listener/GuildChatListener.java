@@ -14,6 +14,7 @@ import pl.Ljimmex.fractionCore.database.entity.Guild;
 import pl.Ljimmex.fractionCore.database.entity.GuildRank;
 import pl.Ljimmex.fractionCore.database.entity.PlayerData;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.GuildRelationManager;
+import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.PlayerGuildCache;
 
 import java.sql.SQLException;
 import java.util.Locale;
@@ -27,14 +28,16 @@ public class GuildChatListener implements Listener {
     private final GuildDao guildDao;
     private final ModuleConfig guildConfig;
     private final GuildRelationManager relationManager;
+    private final PlayerGuildCache playerGuildCache;
 
     public GuildChatListener(JavaPlugin plugin, PlayerDao playerDao, GuildDao guildDao, ModuleConfig guildConfig,
-                             GuildRelationManager relationManager) {
+                             GuildRelationManager relationManager, PlayerGuildCache playerGuildCache) {
         this.plugin = plugin;
         this.playerDao = playerDao;
         this.guildDao = guildDao;
         this.guildConfig = guildConfig;
         this.relationManager = relationManager;
+        this.playerGuildCache = playerGuildCache;
     }
 
     @EventHandler
@@ -44,25 +47,48 @@ public class GuildChatListener implements Listener {
         }
 
         Player player = event.getPlayer();
+        Optional<PlayerGuildCache.Entry> sourceCached = playerGuildCache.get(player.getUniqueId());
+        UUID sourceGuildId;
+        GuildRank rank;
+        if (sourceCached.isPresent()) {
+            sourceGuildId = sourceCached.get().guildId();
+            rank = sourceCached.get().rank();
+        } else {
+            try {
+                Optional<PlayerData> dataOpt = playerDao.findByUuid(player.getUniqueId());
+                if (dataOpt.isEmpty() || dataOpt.get().getGuildId() == null) {
+                    return;
+                }
+                PlayerData data = dataOpt.get();
+                playerGuildCache.refresh(player.getUniqueId(), data);
+                sourceGuildId = data.getGuildId();
+                rank = data.getRank();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to format guild chat for " + player.getName() + ": " + e.getMessage());
+                return;
+            }
+        }
+        Optional<Guild> guildOpt;
         try {
-            Optional<PlayerData> dataOpt = playerDao.findByUuid(player.getUniqueId());
-            if (dataOpt.isEmpty() || dataOpt.get().getGuildId() == null) {
-                return;
-            }
-            PlayerData data = dataOpt.get();
-            UUID sourceGuildId = data.getGuildId();
-            Optional<Guild> guildOpt = guildDao.findById(sourceGuildId);
-            if (guildOpt.isEmpty()) {
-                return;
-            }
-            Guild guild = guildOpt.get();
-            GuildRank rank = data.getRank();
+            guildOpt = guildDao.findById(sourceGuildId);
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Failed to format guild chat for " + player.getName() + ": " + e.getMessage());
+            return;
+        }
+        if (guildOpt.isEmpty()) {
+            return;
+        }
+        Guild guild = guildOpt.get();
 
-            String format = guildConfig.getString("chat.format", "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
+        String format = guildConfig.getString("chat.format", "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
 
-            event.renderer((source, sourceDisplayName, message, viewer) -> {
-                UUID viewerGuildId = null;
-                if (viewer instanceof Player viewerPlayer) {
+        event.renderer((source, sourceDisplayName, message, viewer) -> {
+            UUID viewerGuildId = null;
+            if (viewer instanceof Player viewerPlayer) {
+                Optional<PlayerGuildCache.Entry> cached = playerGuildCache.get(viewerPlayer.getUniqueId());
+                if (cached.isPresent()) {
+                    viewerGuildId = cached.get().guildId();
+                } else {
                     try {
                         Optional<PlayerData> viewerDataOpt = playerDao.findByUuid(viewerPlayer.getUniqueId());
                         if (viewerDataOpt.isPresent()) {
@@ -72,13 +98,11 @@ public class GuildChatListener implements Listener {
                         plugin.getLogger().warning("Failed to resolve viewer guild for chat: " + e.getMessage());
                     }
                 }
-                boolean sameGuild = sourceGuildId.equals(viewerGuildId);
-                Component prefix = buildPrefix(format, player, guild, rank, viewerGuildId, sameGuild);
-                return prefix.append(message);
-            });
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Failed to format guild chat for " + player.getName() + ": " + e.getMessage());
-        }
+            }
+            boolean sameGuild = sourceGuildId.equals(viewerGuildId);
+            Component prefix = buildPrefix(format, player, guild, rank, viewerGuildId, sameGuild);
+            return prefix.append(message);
+        });
     }
 
     private Component buildPrefix(String format, Player player, Guild guild, GuildRank rank, UUID viewerGuildId, boolean includeRankLetter) {

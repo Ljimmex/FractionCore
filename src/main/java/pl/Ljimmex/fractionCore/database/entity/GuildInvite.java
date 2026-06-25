@@ -1,5 +1,7 @@
 package pl.Ljimmex.fractionCore.database.entity;
 
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import java.util.UUID;
 
 public class GuildInvite {
@@ -72,6 +74,6 @@ public class GuildInvite {
     }
 
     public boolean isExpired() {
-        return System.currentTimeMillis() / 1000 >= expiresAt;
+        return TimeUtil.currentEpochSeconds() >= expiresAt;
     }
 }

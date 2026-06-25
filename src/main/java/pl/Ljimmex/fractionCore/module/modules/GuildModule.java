@@ -3,6 +3,7 @@ package pl.Ljimmex.fractionCore.module.modules;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.module.BaseModule;
 import pl.Ljimmex.fractionCore.module.modules.guild.listener.GuildChatListener;
+import pl.Ljimmex.fractionCore.module.modules.guild.listener.GuildConnectionListener;
 import pl.Ljimmex.fractionCore.module.modules.guild.listener.GuildHomeListener;
 import pl.Ljimmex.fractionCore.module.modules.guild.listener.GuildJoinListener;
 import pl.Ljimmex.fractionCore.module.modules.guild.listener.GuildQuitListener;
@@ -47,6 +48,7 @@ public class GuildModule extends BaseModule {
         registerListener(new GuildQuitListener(guildService.getTagManager()));
         registerListener(new GuildHomeListener(guildService));
         registerListener(new GuildChatListener(getPlugin(), guildService.getPlayerDao(), guildService.getGuildDao(),
-                guildService.getGuildConfig(), guildService.getRelationManager()));
+                guildService.getGuildConfig(), guildService.getRelationManager(), guildService.getContext().getPlayerGuildCache()));
+        registerListener(new GuildConnectionListener(guildService));
     }
 }

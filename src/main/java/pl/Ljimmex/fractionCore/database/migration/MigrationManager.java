@@ -1,5 +1,7 @@
 package pl.Ljimmex.fractionCore.database.migration;
 
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
 import pl.Ljimmex.fractionCore.database.config.DatabaseType;
@@ -61,11 +63,11 @@ public class MigrationManager {
         DatabaseType type = databaseManager.getConfig().getType();
         String sql;
         if (type == DatabaseType.POSTGRESQL) {
-            sql = "INSERT INTO schema_version (version, applied_at) VALUES (" + version + ", " + System.currentTimeMillis() / 1000 + ") " +
+            sql = "INSERT INTO schema_version (version, applied_at) VALUES (" + version + ", " + TimeUtil.currentEpochSeconds() + ") " +
                     "ON CONFLICT (version) DO UPDATE SET applied_at = EXCLUDED.applied_at";
         } else {
             sql = dialect.insertOrReplace("schema_version", "version, applied_at") +
-                    "(" + version + ", " + System.currentTimeMillis() / 1000 + ")";
+                    "(" + version + ", " + TimeUtil.currentEpochSeconds() + ")";
         }
         try (Connection connection = databaseManager.getConnection();
              Statement statement = connection.createStatement()) {

@@ -3,9 +3,9 @@ version: '${version}'
 description: '${description}'
 main: pl.Ljimmex.fractionCore.FractionCore
 api-version: '1.20'
-load: STARTUP
+load: POSTWORLD
 authors: [Ljimex]
-website: https://github.com/Ljinmex/FractionCore
+website: https://github.com/Ljimmex/FractionCore
 
 permissions:
   fractioncore.command.guild:

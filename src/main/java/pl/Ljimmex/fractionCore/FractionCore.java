@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.command.GuildCommand;
 import pl.Ljimmex.fractionCore.config.ConfigManager;
 import pl.Ljimmex.fractionCore.config.DebugManager;
+import pl.Ljimmex.fractionCore.database.async.DatabaseExecutor;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
@@ -59,7 +60,12 @@ public final class FractionCore extends JavaPlugin {
         moduleManager.loadConfiguration(configManager.getPluginConfig());
         moduleManager.enableModules();
 
-        GuildService guildService = createGuildService();
+        DatabaseModule databaseModule = (DatabaseModule) moduleManager.getModule("database");
+        if (databaseModule == null) {
+            throw new IllegalStateException("Database module is required");
+        }
+        DatabaseExecutor databaseExecutor = databaseModule.getDatabaseExecutor();
+        GuildService guildService = createGuildService(databaseExecutor);
         GuildModule guildModule = (GuildModule) moduleManager.getModule("guild");
         if (guildModule != null) {
             guildModule.setGuildService(guildService);
@@ -118,7 +124,7 @@ public final class FractionCore extends JavaPlugin {
         return moduleManager;
     }
 
-    private GuildService createGuildService() {
+    private GuildService createGuildService(DatabaseExecutor databaseExecutor) {
         DatabaseModule databaseModule = (DatabaseModule) moduleManager.getModule("database");
         if (databaseModule == null) {
             throw new IllegalStateException("Database module is required for guild service");
@@ -138,7 +144,7 @@ public final class FractionCore extends JavaPlugin {
         GuildAllyRequestDao guildAllyRequestDao = databaseModule.getGuildAllyRequestDao();
         GuildDisbandHistoryDao guildDisbandHistoryDao = databaseModule.getGuildDisbandHistoryDao();
         GuildFlagDao guildFlagDao = databaseModule.getGuildFlagDao();
-        return new GuildService(this, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, guildJoinRequestDao,
+        return new GuildService(this, databaseExecutor, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, guildJoinRequestDao,
                 guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, guildFlagDao,
                 configManager.getModuleConfig("guild"), langManager);
     }

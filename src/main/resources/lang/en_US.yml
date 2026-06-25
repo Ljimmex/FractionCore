@@ -18,10 +18,39 @@ general:
   unknown_command: "Unknown command. Use /guild help to see available commands."
   reload_success: "Reloaded {count} language files."
   reload_error: "An error occurred while reloading languages: {error}"
+  missing_translation: "<red>[Missing translation: {key}]"
 
 guild:
   create:
     success: "<green>Guild created successfully!</green>"
+    announcement: "<yellow>Guild <aqua>{guild}</aqua> <dark_gray>[<yellow>{tag}</yellow><dark_gray>] was founded by <aqua>{player}</aqua><yellow>!"
+    preview:
+      title: "<gold>=== GUILD CREATION SUMMARY ==="
+      name_label: "<gray>Name: "
+      tag_label: "<gray>Tag: "
+      status_ok: "<green>Everything looks good. Type /guild create confirm to proceed.</green>"
+      status_error: "<red>Error: {reason}</red>"
+      cost_header: "<yellow>Cost:"
+      cost_entry: "<gray>- {material}: "
+      result:
+        ok: "OK"
+        invalid_name: "invalid name"
+        name_too_short: "name too short"
+        name_too_long: "name too long"
+        invalid_tag: "invalid tag"
+        tag_too_short: "tag too short"
+        tag_too_long: "tag too long"
+        name_taken: "name taken"
+        tag_taken: "tag taken"
+        insufficient_items: "insufficient items"
+        already_in_guild: "already in a guild"
+        cooldown: "cooldown"
+        blocked_world: "blocked world"
+        too_close_to_spawn: "too close to spawn"
+        too_close_to_other_guild: "too close to another guild"
+        invalid_location: "invalid location"
+        error: "system error"
+        no_pending_request: "no pending request"
     error_name_taken: "Guild <red>{name}</red> already exists!"
     error_tag_taken: "Tag <red>[{tag}]</red> is already taken!"
     error_name_invalid: "<red>Invalid characters in guild name!</red> You entered: <yellow>{name}</yellow>. <gray>Allowed: letters, numbers, spaces, _</gray>"
@@ -217,6 +246,8 @@ guild:
     no_allies: "<gray>No allies."
     no_enemies: "<gray>No enemies."
     error_generic: "<red>An error occurred while fetching relations.</red>"
+    list_header: "<gold>=== Relations of guild {guild} [{tag}] ==="
+    incoming_requests_header: "<yellow>Pending ally proposals:"
   cuboid:
     protection:
       denied: "<red>You don't have permission for this action in this territory."
@@ -231,6 +262,123 @@ guild:
   not_found: "<red>Guild not found.</red>"
   no_guild: "<red>You do not belong to any guild.</red>"
   not_member: "<red>Player {player} is not a member of your guild.</red>"
+
+  help:
+    # Help messages use |- block scalars so one key can hold multiple lines.
+    # This keeps related lines grouped without one key per line.
+    separator: "&8&m----------------------------------------"
+    main:
+      title: "&6&lFractionCore &8» &eHelp"
+      welcome: "&7Welcome to the plugin help panel!"
+      available_commands: "&6Available commands:"
+      info_header: "&6Information:"
+      plugin: "&7Plugin: &eFractionCore"
+      version: "&7Version: &e{version}"
+      author: "&7Author: &e{author}"
+      lines: |-
+        &e/guild help &8- &7Shows this help
+        &e/guild help guild &8- &7Guild commands
+        &e/guild help admin &8- &7Admin commands
+        &e/guild create <name> <tag> &8- &7Create a guild
+        &e/guild invite <nick> &8- &7Invite a player
+        &e/guild join <tag> &8- &7Join a guild
+        &e/guild leave &8- &7Leave the guild
+        &e/guild info [tag] &8- &7Guild information
+        &e/guild home &8- &7Teleport to guild home
+    guild:
+      title: "&6&lFractionCore &8» &eGuild Help"
+      subtitle: "&7Commands available to guild members."
+      lines: |-
+        &6Creation:
+        &e/guild create <name> <tag> &8- &7Start guild creation
+        &e/guild create confirm &8- &7Confirm guild creation
+        &6Members:
+        &e/guild invite <nick> &8- &7Invite a player
+        &e/guild invite cancel &8- &7Cancel sent invitations
+        &e/guild invite decline <tag> &8- &7Decline invitation
+        &e/guild join <tag> &8- &7Join a guild
+        &e/guild leave &8- &7Leave the guild
+        &e/guild kick <nick> &8- &7Kick a member
+        &6Ranks:
+        &e/guild promote <nick> [rank] &8- &7Promote a member
+        &e/guild demote <nick> [rank] &8- &7Demote a member
+        &e/guild leader <nick> &8- &7Transfer leadership
+        &6Management:
+        &e/guild sethome &8- &7Set guild home
+        &e/guild home &8- &7Teleport to guild home
+        &e/guild description <text> &8- &7Set guild description
+        &e/guild flag <flag> <true/false> &8- &7Change guild flag
+        &e/guild ban <nick> [reason] &8- &7Ban a player
+        &e/guild unban <nick> &8- &7Unban a player
+        &e/guild banlist &8- &7Banned list
+        &e/guild requests &8- &7Join requests list
+        &e/guild joinaccept <nick> &8- &7Accept request
+        &e/guild joindecline <nick> &8- &7Decline request
+        &e/guild disband &8- &7Disband the guild
+        &e/guild disband confirm &8- &7Confirm disband
+        &6Relations:
+        &e/guild ally <tag> &8- &7Send ally request
+        &e/guild allyaccept <tag> &8- &7Accept ally request
+        &e/guild allydecline <tag> &8- &7Decline ally request
+        &e/guild enemy <tag> &8- &7Set enemy relation
+        &e/guild neutral <tag> &8- &7Set neutral relation
+        &e/guild relations &8- &7List allies and enemies
+        &6Cuboid:
+        &e/guild cuboidflag [flag] [value] &8- &7Manage cuboid flags
+        &e/guild info [tag] &8- &7Guild information
+    admin:
+      title: "&6&lFractionCore &8» &eAdmin Help"
+      subtitle: "&7Plugin management commands."
+      lines: |-
+        &e/guild admin module <list|enable|disable|reload> [module] &8- &7Manage modules
+        &e/guild admin lang <reload|reset> &8- &7Reload / reset languages
+        &e/guild admin reload &8- &7Reload configuration
+        &e/guild admin debug <true|false> &8- &7Debug mode
+        &e/guild admin plugin reload &8- &7Reload plugin (requires PlugMan)
+  usage:
+    base: "&eUsage: {usage}"
+    create: "&eUsage: /guild create <name> <tag>"
+    create_confirm: "&eNext: /guild create confirm"
+    flag: "&eUsage: /guild flag <flag> <true/false>"
+    flag_available: "&eAvailable flags: public, allow-join-requests, show-home"
+    cuboid: "&eUsage: /guild cuboidflag <flag> <value>"
+    cuboid_available_flags: "&eAvailable flags: BUILD, DESTROY, USE, TNT, INTERACT, FRIENDLY_FIRE"
+    cuboid_available_values: "&eAvailable values: ALLOW, DENY, MEMBERS, ALLIES, LEADER"
+  error:
+    player_only: "<red>This command can only be used by a player.</red>"
+    player_not_online: "<red>Player is not online.</red>"
+    no_permission: "<red>You do not have permission.</red>"
+  admin:
+    module_list:
+      header: "&6=== MODULES ==="
+      entry: "<{state_color}>- {module} [{state}]"
+    module:
+      enabled: "&aEnabled module '{module}'."
+      enable_failed: "&cFailed to enable module '{module}'."
+      disabled: "&aDisabled module '{module}'."
+      disable_failed: "&cFailed to disable module '{module}'."
+      reloaded: "&aReloaded module '{module}'."
+      reload_failed: "&cFailed to reload module '{module}'."
+      reload_all_success: "&aReloaded all modules."
+    lang:
+      module_inactive: "<red>Language module is not active.</red>"
+      reload_success: "&aReloaded language files."
+      reset_success: "&aReset language files to defaults."
+    reload_success: "&aReloaded all configuration files and modules."
+    debug:
+      enabled: "&aDebug mode: enabled"
+      disabled: "&aDebug mode: disabled"
+    plugin:
+      plugman_missing: "<red>To reload the plugin without restart, install PlugMan (or similar plugin manager).</red>"
+      reload_success: "&aReloaded FractionCore plugin using PlugMan."
+    usage:
+      header: "&6=== ADMIN FRACTIONCORE ==="
+      lines: |-
+        &e/guild admin module <list|enable|disable|reload> [module] &8- &7Manage modules
+        &e/guild admin lang <reload|reset> &8- &7Reload / reset languages
+        &e/guild admin reload &8- &7Reload configuration
+        &e/guild admin debug <true|false> &8- &7Debug mode
+        &e/guild admin plugin reload &8- &7Reload plugin (requires PlugMan)
 
 egg:
   damaged: "<red><bold>WARNING!</bold></red> Your guild egg has been damaged! Remaining lives: <yellow>{lives}/{max_lives}</yellow>."

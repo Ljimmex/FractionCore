@@ -1,5 +1,7 @@
 package pl.Ljimmex.fractionCore.database.dao;
 
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
 import pl.Ljimmex.fractionCore.database.entity.GuildRelation;
 import pl.Ljimmex.fractionCore.database.entity.RelationType;
@@ -111,7 +113,7 @@ public class GuildRelationDaoImpl implements GuildRelationDao {
                 statement.executeUpdate();
             }
         } else {
-            save(new GuildRelation(0, guild1Id, guild2Id, type, System.currentTimeMillis() / 1000));
+            save(new GuildRelation(0, guild1Id, guild2Id, type, TimeUtil.currentEpochSeconds()));
         }
     }
 

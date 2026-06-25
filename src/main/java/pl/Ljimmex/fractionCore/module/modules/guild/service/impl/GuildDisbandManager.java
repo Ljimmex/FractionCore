@@ -1,5 +1,7 @@
 package pl.Ljimmex.fractionCore.module.modules.guild.service.impl;
 
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GuildDisbandManager {
@@ -31,80 +34,162 @@ public class GuildDisbandManager {
     }
 
     public boolean prepareDisband(Player player) {
+        PrepareDisbandResult result = prepareDisbandData(player);
+        applyPrepareDisbandEffects(player, result);
+        return result.success();
+    }
+
+    public PrepareDisbandResult prepareDisbandData(Player player) {
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null) {
-                context.send(player, "guild.no_guild", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return PrepareDisbandResult.error("guild.no_guild", PlaceholderContext.of(player));
             }
             if (data.getRank() != GuildRank.LEADER) {
-                context.send(player, "guild.disband.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return PrepareDisbandResult.error("guild.disband.error_no_permission", PlaceholderContext.of(player));
             }
             Optional<Guild> guildOpt = context.guildDao.findById(data.getGuildId());
             if (guildOpt.isEmpty()) {
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return PrepareDisbandResult.error("guild.not_found", PlaceholderContext.of(player));
             }
-            Guild guild = guildOpt.get();
             long timeoutSeconds = context.guildConfig.getLong("disband.timeout-seconds", 60);
             if (timeoutSeconds <= 0) {
                 timeoutSeconds = 60;
             }
-            long expiresAt = System.currentTimeMillis() / 1000 + timeoutSeconds;
-
-            PendingDisband existing = pendingDisbands.get(player.getUniqueId());
-            if (existing != null) {
-                Bukkit.getScheduler().cancelTask(existing.taskId());
-            }
-
-            int taskId = startActionBarTask(player, expiresAt);
-            pendingDisbands.put(player.getUniqueId(), new PendingDisband(guild.getId(), expiresAt, taskId));
-            return true;
+            long expiresAt = TimeUtil.currentEpochSeconds() + timeoutSeconds;
+            return new PrepareDisbandResult(true, guildOpt.get().getId(), expiresAt, null, PlaceholderContext.empty());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to prepare guild disband: " + e.getMessage());
-            context.send(player, "guild.create.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return PrepareDisbandResult.error("guild.create.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void applyPrepareDisbandEffects(Player player, PrepareDisbandResult result) {
+        if (!result.success()) {
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        PendingDisband existing = pendingDisbands.get(player.getUniqueId());
+        if (existing != null) {
+            Bukkit.getScheduler().cancelTask(existing.taskId());
+        }
+        int taskId = startActionBarTask(player, result.expiresAt());
+        pendingDisbands.put(player.getUniqueId(), new PendingDisband(result.guildId(), result.expiresAt(), taskId));
+    }
+
+    public CompletableFuture<PrepareDisbandResult> prepareDisbandAsync(Player player) {
+        return context.databaseExecutor.supplyAsync(() -> prepareDisbandData(player));
+    }
+
+    public record PrepareDisbandResult(boolean success, UUID guildId, long expiresAt,
+                                        String errorKey, PlaceholderContext errorContext) {
+        public static PrepareDisbandResult error(String key, PlaceholderContext context) {
+            return new PrepareDisbandResult(false, null, 0, key, context);
         }
     }
 
     public boolean confirmDisband(Player player) {
+        ConfirmDisbandResult result = prepareConfirmDisbandData(player);
+        applyConfirmDisbandEffects(player, result);
+        return result.success();
+    }
+
+    public ConfirmDisbandResult prepareConfirmDisbandData(Player player) {
         PendingDisband pending = pendingDisbands.get(player.getUniqueId());
-        if (pending == null || pending.expiresAt < System.currentTimeMillis() / 1000) {
+        if (pending == null || pending.expiresAt < TimeUtil.currentEpochSeconds()) {
             if (pending != null) {
                 Bukkit.getScheduler().cancelTask(pending.taskId());
                 pendingDisbands.remove(player.getUniqueId());
             }
-            context.send(player, "guild.disband.error_expired", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return ConfirmDisbandResult.error("guild.disband.error_expired", PlaceholderContext.of(player));
         }
         Bukkit.getScheduler().cancelTask(pending.taskId());
         try {
             PlayerData data = context.getOrCreatePlayerData(player);
             if (data.getGuildId() == null || !data.getGuildId().equals(pending.guildId)) {
-                pendingDisbands.remove(player.getUniqueId());
-                context.send(player, "guild.disband.error_changed", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return ConfirmDisbandResult.error("guild.disband.error_changed", PlaceholderContext.of(player));
             }
             Optional<Guild> guildOpt = context.guildDao.findById(pending.guildId);
             if (guildOpt.isEmpty()) {
-                pendingDisbands.remove(player.getUniqueId());
-                context.send(player, "guild.not_found", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return ConfirmDisbandResult.error("guild.not_found", PlaceholderContext.of(player));
             }
             Guild guild = guildOpt.get();
             if (data.getRank() != GuildRank.LEADER) {
-                pendingDisbands.remove(player.getUniqueId());
-                context.send(player, "guild.disband.error_no_permission", MessageType.ERROR, PlaceholderContext.of(player));
-                return false;
+                return ConfirmDisbandResult.error("guild.disband.error_no_permission", PlaceholderContext.of(player));
             }
-            executeDisband(player, guild);
-            pendingDisbands.remove(player.getUniqueId());
-            return true;
+
+            UUID guildId = guild.getId();
+            long now = TimeUtil.currentEpochSeconds();
+
+            List<CostItem> refund = calculateRefund();
+            List<PlayerData> members = clearGuildMembersData(guildId, now);
+            deleteGuildData(guildId);
+            archiveGuild(guild, now, player.getUniqueId());
+
+            PlaceholderContext ctx = PlaceholderContext.empty()
+                    .with("player", player.getName())
+                    .with("guild", guild.getName())
+                    .with("tag", guild.getTag());
+            Component broadcast = context.langManager.getMessage("guild.disband.broadcast", MessageType.INFO, ctx);
+            return new ConfirmDisbandResult(true, guild, refund, members, broadcast, null, PlaceholderContext.empty());
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to disband guild: " + e.getMessage());
-            context.send(player, "guild.create.error_generic", MessageType.ERROR, PlaceholderContext.of(player));
-            return false;
+            return ConfirmDisbandResult.error("guild.create.error_generic", PlaceholderContext.of(player));
+        }
+    }
+
+    public void applyConfirmDisbandEffects(Player player, ConfirmDisbandResult result) {
+        if (!result.success()) {
+            pendingDisbands.remove(player.getUniqueId());
+            context.send(player, result.errorKey(), MessageType.ERROR, result.errorContext());
+            return;
+        }
+        Guild guild = result.guild();
+        UUID guildId = guild.getId();
+        pendingDisbands.remove(player.getUniqueId());
+
+        Optional<CuboidData> cuboidOpt = context.cuboidManager.findCuboidByGuild(guildId);
+        cuboidOpt.ifPresent(this::removeGuildEgg);
+        context.cuboidManager.deleteCuboid(guildId);
+
+        context.tagManager.updateAllTags();
+
+        if (!result.refund().isEmpty()) {
+            context.giveItems(player, result.refund());
+            context.send(player, "guild.disband.refund", MessageType.INFO,
+                    PlaceholderContext.of(player)
+                            .with("items", context.formatCostItems(result.refund()))
+                            .with("percentage", (int) (Math.min(1.0, Math.max(0.0, context.guildConfig.getDouble("disband.refund.percentage", 0.5))) * 100)));
+        }
+
+        for (PlayerData member : result.members()) {
+            context.getPlayerGuildCache().remove(member.getUuid());
+            Player online = Bukkit.getPlayer(member.getUuid());
+            if (online != null) {
+                context.tagManager.clearPlayerTag(online);
+                context.send(online, "guild.disband.member_message", MessageType.INFO,
+                        PlaceholderContext.of(online).with("guild", ""));
+            }
+        }
+
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!online.getUniqueId().equals(player.getUniqueId())) {
+                online.sendMessage(result.broadcast());
+            }
+        }
+        context.send(player, "guild.disband.success", MessageType.SUCCESS,
+                PlaceholderContext.empty().with("player", player.getName()).with("guild", guild.getName()).with("tag", guild.getTag()));
+    }
+
+    public CompletableFuture<ConfirmDisbandResult> confirmDisbandAsync(Player player) {
+        return context.databaseExecutor.supplyAsync(() -> prepareConfirmDisbandData(player));
+    }
+
+    public record ConfirmDisbandResult(boolean success, Guild guild, List<CostItem> refund,
+                                        List<PlayerData> members, Component broadcast,
+                                        String errorKey, PlaceholderContext errorContext) {
+        public static ConfirmDisbandResult error(String key, PlaceholderContext context) {
+            return new ConfirmDisbandResult(false, null, List.of(), List.of(), null, key, context);
         }
     }
 
@@ -118,11 +203,11 @@ public class GuildDisbandManager {
                     return;
                 }
                 PendingDisband current = pendingDisbands.get(player.getUniqueId());
-                if (current == null || current.expiresAt < System.currentTimeMillis() / 1000) {
+                if (current == null || current.expiresAt < TimeUtil.currentEpochSeconds()) {
                     this.cancel();
                     return;
                 }
-                long remaining = current.expiresAt - System.currentTimeMillis() / 1000;
+                long remaining = current.expiresAt - TimeUtil.currentEpochSeconds();
                 Component message = context.langManager.getMessageWithoutPrefix("guild.disband.action_bar",
                         PlaceholderContext.of(player).with("seconds", remaining));
                 player.sendActionBar(message);
@@ -131,51 +216,20 @@ public class GuildDisbandManager {
         return runnable.runTaskTimer(context.plugin, 0L, 20L).getTaskId();
     }
 
-    private void executeDisband(Player player, Guild guild) throws SQLException {
-        UUID guildId = guild.getId();
-        long now = System.currentTimeMillis() / 1000;
-
-        processRefund(player, guild);
-        archiveGuild(guild, now, player.getUniqueId());
-        clearGuildMembers(guildId, now);
-        deleteGuildData(guildId);
-
-        context.tagManager.updateAllTags();
-
-        PlaceholderContext ctx = PlaceholderContext.empty()
-                .with("player", player.getName())
-                .with("guild", guild.getName())
-                .with("tag", guild.getTag());
-        Component broadcast = context.langManager.getMessage("guild.disband.broadcast", MessageType.INFO, ctx);
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            if (!online.getUniqueId().equals(player.getUniqueId())) {
-                online.sendMessage(broadcast);
-            }
-        }
-        context.send(player, "guild.disband.success", MessageType.SUCCESS, ctx);
-    }
-
-    private void processRefund(Player player, Guild guild) {
+    private List<CostItem> calculateRefund() {
         boolean refundEnabled = context.guildConfig.getBoolean("disband.refund.enabled", false);
         if (!refundEnabled) {
-            return;
+            return List.of();
         }
         double percentage = Math.max(0.0, Math.min(1.0, context.guildConfig.getDouble("disband.refund.percentage", 0.5)));
         List<CostItem> foundationCost = context.loadFoundationCostItems();
         if (foundationCost.isEmpty()) {
-            return;
+            return List.of();
         }
-        List<CostItem> refund = foundationCost.stream()
+        return foundationCost.stream()
                 .map(item -> new CostItem(item.material(), (int) Math.floor(item.amount() * percentage)))
                 .filter(item -> item.amount() > 0)
                 .toList();
-        if (!refund.isEmpty()) {
-            context.giveItems(player, refund);
-            context.send(player, "guild.disband.refund", MessageType.INFO,
-                    PlaceholderContext.of(player)
-                            .with("items", context.formatCostItems(refund))
-                            .with("percentage", (int) (percentage * 100)));
-        }
     }
 
     private void archiveGuild(Guild guild, long now, UUID disbandedBy) throws SQLException {
@@ -195,7 +249,7 @@ public class GuildDisbandManager {
         context.guildDisbandHistoryDao.save(history);
     }
 
-    private void clearGuildMembers(UUID guildId, long now) throws SQLException {
+    private List<PlayerData> clearGuildMembersData(UUID guildId, long now) throws SQLException {
         List<PlayerData> members = context.playerDao.findByGuild(guildId);
         for (PlayerData member : members) {
             member.setGuildId(null);
@@ -203,23 +257,14 @@ public class GuildDisbandManager {
             member.setJoinedGuildAt(0);
             member.setLeftGuildAt(now);
             context.playerDao.update(member);
-            Player online = Bukkit.getPlayer(member.getUuid());
-            if (online != null) {
-                context.tagManager.clearPlayerTag(online);
-                context.send(online, "guild.disband.member_message", MessageType.INFO,
-                        PlaceholderContext.of(online).with("guild", ""));
-            }
         }
+        return members;
     }
 
     private void deleteGuildData(UUID guildId) throws SQLException {
-        Optional<CuboidData> cuboidOpt = context.cuboidManager.findCuboidByGuild(guildId);
-        cuboidOpt.ifPresent(this::removeGuildEgg);
-
         context.guildInviteDao.deleteByGuild(guildId);
         context.guildJoinRequestDao.deleteByGuild(guildId);
         context.guildBanDao.deleteByGuild(guildId);
-        context.cuboidManager.deleteCuboid(guildId);
         context.guildDao.delete(guildId);
     }
 

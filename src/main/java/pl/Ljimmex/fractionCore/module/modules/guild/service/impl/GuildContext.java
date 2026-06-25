@@ -2,13 +2,13 @@ package pl.Ljimmex.fractionCore.module.modules.guild.service.impl;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.config.ModuleConfig;
+import pl.Ljimmex.fractionCore.database.async.DatabaseExecutor;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
@@ -27,6 +27,8 @@ import pl.Ljimmex.fractionCore.lang.PlaceholderContext;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.GuildTagManager;
 
 import java.sql.SQLException;
+import pl.Ljimmex.fractionCore.util.TimeUtil;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
@@ -37,6 +39,7 @@ import java.util.UUID;
 public class GuildContext {
 
     final JavaPlugin plugin;
+    final DatabaseExecutor databaseExecutor;
     final GuildDao guildDao;
     final PlayerDao playerDao;
     final CuboidDao cuboidDao;
@@ -52,14 +55,16 @@ public class GuildContext {
     final GuildTagManager tagManager;
     final GuildRelationManager relationManager;
     final CuboidManager cuboidManager;
+    final PlayerGuildCache playerGuildCache;
 
-    public GuildContext(JavaPlugin plugin, GuildDao guildDao, PlayerDao playerDao, CuboidDao cuboidDao,
+    public GuildContext(JavaPlugin plugin, DatabaseExecutor databaseExecutor, GuildDao guildDao, PlayerDao playerDao, CuboidDao cuboidDao,
                         GuildBanDao guildBanDao, GuildInviteDao guildInviteDao, GuildJoinRequestDao guildJoinRequestDao,
                         GuildRelationDao guildRelationDao, GuildAllyRequestDao guildAllyRequestDao,
                         GuildDisbandHistoryDao guildDisbandHistoryDao,
                         GuildFlagDao guildFlagDao,
                         ModuleConfig guildConfig, LangManager langManager) {
         this.plugin = plugin;
+        this.databaseExecutor = databaseExecutor;
         this.guildDao = guildDao;
         this.playerDao = playerDao;
         this.cuboidDao = cuboidDao;
@@ -74,11 +79,16 @@ public class GuildContext {
         this.langManager = langManager;
         this.relationManager = new GuildRelationManager(this);
         this.tagManager = new GuildTagManager(playerDao, guildDao, guildConfig, relationManager);
+        this.playerGuildCache = new PlayerGuildCache();
         this.cuboidManager = new CuboidManager(this);
     }
 
     public JavaPlugin getPlugin() {
         return plugin;
+    }
+
+    public DatabaseExecutor getDatabaseExecutor() {
+        return databaseExecutor;
     }
 
     public GuildDao getGuildDao() {
@@ -137,6 +147,10 @@ public class GuildContext {
         return cuboidManager;
     }
 
+    public PlayerGuildCache getPlayerGuildCache() {
+        return playerGuildCache;
+    }
+
     public boolean isModeratorOrHigher(GuildRank rank) {
         return rank == GuildRank.LEADER || rank == GuildRank.CO_LEADER || rank == GuildRank.MODERATOR;
     }
@@ -148,7 +162,9 @@ public class GuildContext {
     public void send(Audience audience, String key, MessageType type, PlaceholderContext context) {
         String raw = langManager.getRawMessage(key);
         if (raw == null) {
-            audience.sendMessage(Component.text("[Brak tlumaczenia: " + key + "]").color(NamedTextColor.RED));
+            Player player = audience instanceof Player p ? p : null;
+            PlaceholderContext fallbackCtx = player != null ? PlaceholderContext.of(player) : PlaceholderContext.empty();
+            audience.sendMessage(langManager.getMessageWithoutPrefix("general.missing_translation", fallbackCtx.with("key", key)));
             return;
         }
         audience.sendMessage(langManager.getMessage(key, type, context));
@@ -199,8 +215,9 @@ public class GuildContext {
         data.setGuildId(null);
         data.setRank(null);
         data.setJoinedGuildAt(0);
-        data.setLeftGuildAt(System.currentTimeMillis() / 1000);
+        data.setLeftGuildAt(TimeUtil.currentEpochSeconds());
         playerDao.update(data);
+        playerGuildCache.remove(data.getUuid());
     }
 
     public String formatDate(long timestampSeconds) {

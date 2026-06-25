@@ -8,8 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -20,16 +18,23 @@ import pl.Ljimmex.fractionCore.config.DebugManager;
 import pl.Ljimmex.fractionCore.module.BaseModule;
 import pl.Ljimmex.fractionCore.module.ModuleManager;
 import pl.Ljimmex.fractionCore.module.ModuleState;
+import pl.Ljimmex.fractionCore.lang.LangManager;
+import pl.Ljimmex.fractionCore.lang.MessageParser;
+import pl.Ljimmex.fractionCore.lang.MessageType;
+import pl.Ljimmex.fractionCore.lang.PlaceholderContext;
+import pl.Ljimmex.fractionCore.lang.PlaceholderResolver;
 import pl.Ljimmex.fractionCore.module.modules.LangModule;
 
 public class GuildAdminCommand {
 
     private final JavaPlugin plugin;
     private final ModuleManager moduleManager;
+    private final LangManager langManager;
 
-    public GuildAdminCommand(JavaPlugin plugin, ModuleManager moduleManager) {
+    public GuildAdminCommand(JavaPlugin plugin, ModuleManager moduleManager, LangManager langManager) {
         this.plugin = plugin;
         this.moduleManager = moduleManager;
+        this.langManager = langManager;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> buildNode() {
@@ -93,12 +98,14 @@ public class GuildAdminCommand {
 
     private int handleModuleList(CommandContext<CommandSourceStack> ctx) {
         CommandSender sender = sender(ctx);
-        sender.sendMessage(Component.text("=== MODULY ===").color(NamedTextColor.GOLD));
+        sendRaw(sender, "guild.admin.module_list.header");
         for (BaseModule module : moduleManager.getModules()) {
             ModuleState state = module.getState();
-            NamedTextColor color = state == ModuleState.RUNNING ? NamedTextColor.GREEN :
-                    state == ModuleState.DISABLED ? NamedTextColor.RED : NamedTextColor.YELLOW;
-            sender.sendMessage(Component.text("- " + module.getName() + " [" + state + "]").color(color));
+            PlaceholderContext context = PlaceholderContext.empty()
+                    .with("module", module.getName())
+                    .with("state", state.name())
+                    .with("state_color", stateColor(state));
+            sendRaw(sender, "guild.admin.module_list.entry", context);
         }
         return Command.SINGLE_SUCCESS;
     }
@@ -111,18 +118,18 @@ public class GuildAdminCommand {
             case RELOAD -> moduleManager.reloadModule(name);
         };
         CommandSender sender = sender(ctx);
-        String message = switch (action) {
-            case ENABLE -> success ? "Wlaczono modul '" + name + "'." : "Nie udalo sie wlaczyc modulu '" + name + "'.";
-            case DISABLE -> success ? "Wylaczono modul '" + name + "'." : "Nie udalo sie wylaczyc modulu '" + name + "'.";
-            case RELOAD -> success ? "Przeladowano modul '" + name + "'." : "Nie udalo sie przeladowac modulu '" + name + "'.";
+        String key = switch (action) {
+            case ENABLE -> success ? "guild.admin.module.enabled" : "guild.admin.module.enable_failed";
+            case DISABLE -> success ? "guild.admin.module.disabled" : "guild.admin.module.disable_failed";
+            case RELOAD -> success ? "guild.admin.module.reloaded" : "guild.admin.module.reload_failed";
         };
-        sender.sendMessage(Component.text(message).color(success ? NamedTextColor.GREEN : NamedTextColor.RED));
+        sendRaw(sender, key, PlaceholderContext.empty().with("module", name));
         return Command.SINGLE_SUCCESS;
     }
 
     private int handleModuleReloadAll(CommandContext<CommandSourceStack> ctx) {
         moduleManager.reloadAllModules();
-        sender(ctx).sendMessage(Component.text("Przeladowano wszystkie moduly.").color(NamedTextColor.GREEN));
+        sendRaw(sender(ctx), "guild.admin.module.reload_all_success");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -130,17 +137,17 @@ public class GuildAdminCommand {
         CommandSender sender = sender(ctx);
         LangModule langModule = getLangModule();
         if (langModule == null) {
-            sender.sendMessage(Component.text("Modul jezykowy nie jest aktywny.").color(NamedTextColor.RED));
+            sendRaw(sender, "guild.admin.lang.module_inactive");
             return Command.SINGLE_SUCCESS;
         }
         switch (action) {
             case RELOAD -> {
                 langModule.getLangManager().reload();
-                sender.sendMessage(Component.text("Przeladowano pliki jezykowe.").color(NamedTextColor.GREEN));
+                sendRaw(sender, "guild.admin.lang.reload_success");
             }
             case RESET -> {
                 langModule.getLangManager().resetLanguages();
-                sender.sendMessage(Component.text("Zresetowano pliki jezykowe do domyslnych.").color(NamedTextColor.GREEN));
+                sendRaw(sender, "guild.admin.lang.reset_success");
             }
         }
         return Command.SINGLE_SUCCESS;
@@ -156,7 +163,7 @@ public class GuildAdminCommand {
         if (langModule != null) {
             langModule.getLangManager().loadConfiguration(configManager.getPluginConfig());
         }
-        sender(ctx).sendMessage(Component.text("Przeladowano wszystkie pliki konfiguracyjne i moduly.").color(NamedTextColor.GREEN));
+        sendRaw(sender(ctx), "guild.admin.reload_success");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -164,7 +171,7 @@ public class GuildAdminCommand {
         boolean enabled = BoolArgumentType.getBool(ctx, "enabled");
         DebugManager debugManager = ((FractionCore) plugin).getDebugManager();
         debugManager.setDebugEnabled(enabled);
-        sender(ctx).sendMessage(Component.text("Tryb debug: " + (enabled ? "wlaczony" : "wylaczony")).color(NamedTextColor.GREEN));
+        sendRaw(sender(ctx), enabled ? "guild.admin.debug.enabled" : "guild.admin.debug.disabled");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -172,22 +179,18 @@ public class GuildAdminCommand {
         CommandSender sender = sender(ctx);
         Plugin plugMan = Bukkit.getPluginManager().getPlugin("PlugMan");
         if (plugMan == null || !plugMan.isEnabled()) {
-            sender.sendMessage(Component.text("Aby przeladowac plugin bez restartu, zainstaluj PlugMan (lub podobny plugin-manager).").color(NamedTextColor.RED));
+            sendRaw(sender, "guild.admin.plugin.plugman_missing");
             return Command.SINGLE_SUCCESS;
         }
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "plugman reload FractionCore");
-        sender.sendMessage(Component.text("Przeladowano plugin FractionCore za pomoca PlugMan.").color(NamedTextColor.GREEN));
+        sendRaw(sender, "guild.admin.plugin.reload_success");
         return Command.SINGLE_SUCCESS;
     }
 
     private int sendAdminUsage(CommandContext<CommandSourceStack> ctx) {
         CommandSender sender = sender(ctx);
-        sender.sendMessage(Component.text("=== ADMIN FRACTIONCORE ===").color(NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("/guild admin module <list|enable|disable|reload> [modul]").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild admin lang <reload|reset> - przeladowanie / reset jezykow").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild admin reload - przeladowanie konfiguracji").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild admin debug <true|false> - tryb debug").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("/guild admin plugin reload - przeladowanie pluginu (wymaga PlugMan)").color(NamedTextColor.YELLOW));
+        sendRaw(sender, "guild.admin.usage.header");
+        sendRaw(sender, "guild.admin.usage.lines");
         return Command.SINGLE_SUCCESS;
     }
 
@@ -211,9 +214,30 @@ public class GuildAdminCommand {
         return ctx.getSource().getSender();
     }
 
-    private static int usage(CommandSender sender, String text) {
-        sender.sendMessage(Component.text("Uzycie: " + text).color(NamedTextColor.YELLOW));
+    private int usage(CommandSender sender, String text) {
+        sender.sendMessage(langManager.getMessage("guild.usage.base", MessageType.RAW, PlaceholderContext.empty().with("usage", text)));
         return 0;
+    }
+
+    private void sendRaw(CommandSender sender, String key) {
+        sendRaw(sender, key, PlaceholderContext.empty());
+    }
+
+    private void sendRaw(CommandSender sender, String key, PlaceholderContext context) {
+        String raw = langManager.getRawMessage(key);
+        if (raw == null) return;
+        String resolved = PlaceholderResolver.resolve(raw, context);
+        for (String line : resolved.split("\n")) {
+            sender.sendMessage(MessageParser.parse(line));
+        }
+    }
+
+    private static String stateColor(ModuleState state) {
+        return switch (state) {
+            case RUNNING -> "green";
+            case DISABLED -> "red";
+            default -> "yellow";
+        };
     }
 
     private enum ModuleAction { ENABLE, DISABLE, RELOAD }
