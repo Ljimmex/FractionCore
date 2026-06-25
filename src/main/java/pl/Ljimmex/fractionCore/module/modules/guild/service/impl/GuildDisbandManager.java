@@ -2,7 +2,6 @@ package pl.Ljimmex.fractionCore.module.modules.guild.service.impl;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -214,13 +213,13 @@ public class GuildDisbandManager {
     }
 
     private void deleteGuildData(UUID guildId) throws SQLException {
-        Optional<CuboidData> cuboidOpt = context.cuboidDao.findByGuildId(guildId);
+        Optional<CuboidData> cuboidOpt = context.cuboidManager.findCuboidByGuild(guildId);
         cuboidOpt.ifPresent(this::removeGuildEgg);
 
         context.guildInviteDao.deleteByGuild(guildId);
         context.guildJoinRequestDao.deleteByGuild(guildId);
         context.guildBanDao.deleteByGuild(guildId);
-        context.cuboidDao.delete(guildId);
+        context.cuboidManager.deleteCuboid(guildId);
         context.guildDao.delete(guildId);
     }
 

@@ -1,7 +1,7 @@
 package pl.Ljimmex.fractionCore.module;
 
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.config.model.PluginConfig;
 
 import java.util.*;
 
@@ -27,13 +27,12 @@ public class ModuleManager {
         return Collections.unmodifiableCollection(modules.values());
     }
 
-    public void loadConfiguration(FileConfiguration config) {
+    public void loadConfiguration(PluginConfig config) {
         userEnabledConfig.clear();
-        if (config.contains("modules")) {
-            for (String key : config.getConfigurationSection("modules").getKeys(false)) {
-                boolean enabled = config.getBoolean("modules." + key + ".enabled", true);
-                userEnabledConfig.put(key.toLowerCase(), enabled);
-            }
+        for (Map.Entry<String, ?> entry : config.getModules().entrySet()) {
+            userEnabledConfig.put(entry.getKey().toLowerCase(),
+                    entry.getValue() instanceof pl.Ljimmex.fractionCore.config.model.ModuleEntry moduleEntry
+                            ? moduleEntry.isEnabled() : Boolean.TRUE);
         }
     }
 

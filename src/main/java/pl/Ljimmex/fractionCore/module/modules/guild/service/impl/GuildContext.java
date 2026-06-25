@@ -7,13 +7,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.config.ModuleConfig;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildFlagDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildRelationDao;
@@ -45,16 +46,19 @@ public class GuildContext {
     final GuildRelationDao guildRelationDao;
     final GuildAllyRequestDao guildAllyRequestDao;
     final GuildDisbandHistoryDao guildDisbandHistoryDao;
-    final FileConfiguration guildConfig;
+    final GuildFlagDao guildFlagDao;
+    final ModuleConfig guildConfig;
     final LangManager langManager;
     final GuildTagManager tagManager;
     final GuildRelationManager relationManager;
+    final CuboidManager cuboidManager;
 
     public GuildContext(JavaPlugin plugin, GuildDao guildDao, PlayerDao playerDao, CuboidDao cuboidDao,
                         GuildBanDao guildBanDao, GuildInviteDao guildInviteDao, GuildJoinRequestDao guildJoinRequestDao,
                         GuildRelationDao guildRelationDao, GuildAllyRequestDao guildAllyRequestDao,
                         GuildDisbandHistoryDao guildDisbandHistoryDao,
-                        FileConfiguration guildConfig, LangManager langManager) {
+                        GuildFlagDao guildFlagDao,
+                        ModuleConfig guildConfig, LangManager langManager) {
         this.plugin = plugin;
         this.guildDao = guildDao;
         this.playerDao = playerDao;
@@ -65,10 +69,12 @@ public class GuildContext {
         this.guildRelationDao = guildRelationDao;
         this.guildAllyRequestDao = guildAllyRequestDao;
         this.guildDisbandHistoryDao = guildDisbandHistoryDao;
+        this.guildFlagDao = guildFlagDao;
         this.guildConfig = guildConfig;
         this.langManager = langManager;
         this.relationManager = new GuildRelationManager(this);
         this.tagManager = new GuildTagManager(playerDao, guildDao, guildConfig, relationManager);
+        this.cuboidManager = new CuboidManager(this);
     }
 
     public JavaPlugin getPlugin() {
@@ -111,7 +117,7 @@ public class GuildContext {
         return guildDisbandHistoryDao;
     }
 
-    public FileConfiguration getGuildConfig() {
+    public ModuleConfig getGuildConfig() {
         return guildConfig;
     }
 
@@ -125,6 +131,10 @@ public class GuildContext {
 
     public GuildRelationManager getRelationManager() {
         return relationManager;
+    }
+
+    public CuboidManager getCuboidManager() {
+        return cuboidManager;
     }
 
     public boolean isModeratorOrHigher(GuildRank rank) {
@@ -277,10 +287,9 @@ public class GuildContext {
                 .orElse("");
     }
 
-    @SuppressWarnings("unchecked")
     public List<CostItem> loadCostItemsAtPath(String path) {
-        List<Map<String, Object>> items = (List<Map<String, Object>>) guildConfig.getList(path);
-        if (items == null) {
+        List<Map<String, Object>> items = guildConfig.getMapList(path);
+        if (items.isEmpty()) {
             return List.of();
         }
         return items.stream()

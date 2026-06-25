@@ -12,9 +12,10 @@ Dokumentacja funkcjonalna systemu gildii w FractionCore. Opisuje zakładanie gil
 4. [Relacje międzygildyjne](#relacje-międzygildyjne)
 5. [Rozwiązanie gildii i przekazanie przywództwa](#rozwiązanie-gildii-i-przekazanie-przywództwa)
 6. [Czat i tagi gildii](#czat-i-tagi-gildii)
-7. [Konfiguracja](#konfiguracja)
-8. [Uprawnienia](#uprawnienia)
-9. [Komendy](#komendy)
+7. [Cuboidy i ochrona terenu](#cuboidy-i-ochrona-terenu)
+8. [Konfiguracja](#konfiguracja)
+9. [Uprawnienia](#uprawnienia)
+10. [Komendy](#komendy)
 
 ---
 
@@ -266,6 +267,45 @@ Każdy gracz z gildią ma tag `[TAG][RANGA]` nad głową i w TAB-ie. Kolor tagu 
 
 ---
 
+## Cuboidy i ochrona terenu
+
+Każda gildia posiada cuboid — prostokątny obszar ochronny wyśrodkowany na jaju gildii. Cuboid jest ładowany do pamięci przy starcie serwera; lokalizacja rozstrzygana jest liniowym skanem po wszystkich cuboidach.
+
+### Flagi cuboidu
+
+Dostępne są 6 flag, każda z 5 możliwych wartości:
+
+| Flaga | Domyślna wartość | Opis |
+|-------|-----------------|------|
+| `BUILD` | `MEMBERS` | Stawianie bloków |
+| `DESTROY` | `MEMBERS` | Niszczenie bloków |
+| `USE` | `MEMBERS` | Używanie kontenerów, drzwi, furtek, przycisków, dźwigni |
+| `INTERACT` | `MEMBERS` | Inne interakcje prawym przyciskiem myszy |
+| `TNT` | `MEMBERS` | Wybuchy TNT na terenie cuboidu (działa odwrotnie niż inne flagi — patrz niżej) |
+| `FRIENDLY_FIRE` | `DENY` | Czy członkowie tej samej gildii mogą się bić w cuboidzie |
+
+Po wybuchu TNT w cuboidzie budowanie i niszczenie jest blokowane na czas określony w konfiguracji (`cuboid.tnt-build-cooldown-seconds`, domyślnie 60 sekund).
+
+> **Uwaga:** Flaga `TNT` działa odwrotnie niż pozostałe flagi. Wartość `MEMBERS` oznacza, że **członkowie gildii są blokowani** (nie mogą griefować własnej gildii), a obcy gracze mogą atakować podczas wojen gildii. `DENY` blokuje każdego, `ALLOW` pozwala każdemu.
+
+Wartości flag:
+
+| Wartość | Znaczenie |
+|---------|-----------|
+| `ALLOW` | Dozwolone dla każdego |
+| `DENY` | Zabronione dla każdego |
+| `MEMBERS` | Dozwolone dla członków gildii |
+| `ALLIES` | Dozwolone dla członków gildii oraz sojuszników |
+| `LEADER` | Dozwolone tylko dla lidera gildii |
+
+### Komendy cuboidu
+
+| Komenda | Opis | Wymagana ranga |
+|---------|------|----------------|
+| `/guild cuboidflag [flaga] [wartość]` | Wyświetla lub zmienia flagi cuboidu | Lider / Co-Lider |
+
+---
+
 ## Konfiguracja
 
 Główny plik konfiguracyjny systemu gildii: `plugins/FractionCore/modules/guild.yml`.
@@ -385,6 +425,7 @@ guild.user.invite
  guild.user.enemy
  guild.user.neutral
  guild.user.relations
+ guild.user.cuboidflag
 ```
 
 Uprawnienia administratora:
@@ -400,6 +441,12 @@ fractioncore.admin.debug
 ---
 
 ## Komendy
+
+Pomoc jest podzielona na kategorie:
+
+- `/guild help` — główna pomoc z najważniejszymi komendami,
+- `/guild help guild` — pełna lista komend gildii,
+- `/guild help admin` — komendy administratora (wymaga `fractioncore.admin`).
 
 | Komenda | Opis | Wymagana ranga |
 |---------|------|----------------|
@@ -433,6 +480,7 @@ fractioncore.admin.debug
 | `/guild enemy <tag>` | Ustal wrogosć | Co-Lider+ |
 | `/guild neutral <tag>` | Ustal relację neutralną | Co-Lider+ |
 | `/guild relations` | Pokaż relacje gildii | członek gildii |
+| `/guild cuboidflag [flaga] [wartość]` | Zarządzaj flagami cuboidu | Lider / Co-Lider |
 | `/guild help` | Pomoc | — |
 | `/guild admin ...` | Komendy administratora | `fractioncore.admin` |
 

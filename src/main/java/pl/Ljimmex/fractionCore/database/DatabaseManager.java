@@ -2,10 +2,8 @@ package pl.Ljimmex.fractionCore.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.database.config.DatabaseConfig;
-import pl.Ljimmex.fractionCore.database.config.DatabaseType;
 import pl.Ljimmex.fractionCore.database.migration.MigrationManager;
 
 import java.io.File;
@@ -24,49 +22,8 @@ public class DatabaseManager {
         this.plugin = plugin;
     }
 
-    public void loadConfiguration(FileConfiguration fileConfiguration) {
-        String typeName = fileConfiguration.getString("database.type", "SQLITE").toUpperCase();
-        DatabaseType type;
-        try {
-            type = DatabaseType.valueOf(typeName);
-        } catch (IllegalArgumentException e) {
-            plugin.getLogger().warning("Unknown database type '" + typeName + "', falling back to SQLITE.");
-            type = DatabaseType.SQLITE;
-        }
-
-        String host;
-        int port;
-        String database;
-        String username;
-        String password;
-
-        if (type == DatabaseType.POSTGRESQL) {
-            host = fileConfiguration.getString("database.postgresql.host", "localhost");
-            port = fileConfiguration.getInt("database.postgresql.port", 5432);
-            database = fileConfiguration.getString("database.postgresql.database", "fractioncore");
-            username = fileConfiguration.getString("database.postgresql.username", "postgres");
-            password = fileConfiguration.getString("database.postgresql.password", "");
-        } else {
-            host = fileConfiguration.getString("database.mysql.host", "localhost");
-            port = fileConfiguration.getInt("database.mysql.port", 3306);
-            database = fileConfiguration.getString("database.mysql.database", "fractioncore");
-            username = fileConfiguration.getString("database.mysql.username", "root");
-            password = fileConfiguration.getString("database.mysql.password", "");
-        }
-
-        this.config = new DatabaseConfig(
-                type,
-                fileConfiguration.getString("database.sqlite.file", "data/database.db"),
-                host,
-                port,
-                database,
-                username,
-                password,
-                fileConfiguration.getInt("database.pool.max-size", 10),
-                fileConfiguration.getLong("database.pool.connection-timeout", 30000L),
-                fileConfiguration.getLong("database.pool.idle-timeout", 600000L),
-                fileConfiguration.getLong("database.pool.max-lifetime", 1800000L)
-        );
+    public void loadConfiguration(DatabaseConfig config) {
+        this.config = config;
     }
 
     public void connect() throws SQLException {

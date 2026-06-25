@@ -964,41 +964,41 @@
                   <span class="task-tag">CUBOID</span>
                 </div>
                 <div class="subtask-container">
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.1</div>
                     <div class="subtask-cell cell-time">3h</div>
                     <div class="subtask-cell cell-desc">Klasa Cuboid (srodek, promien, wysokosc, gildia)</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.2</div>
                     <div class="subtask-cell cell-time">3h</div>
                     <div class="subtask-cell cell-desc">CuboidManager -- przechowywanie i wyszukiwanie cuboidow</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.3</div>
                     <div class="subtask-cell cell-time">3h</div>
                     <div class="subtask-cell cell-desc">Event listenery: BlockPlace, BlockBreak, PlayerInteract</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.4</div>
                     <div class="subtask-cell cell-time">3h</div>
                     <div class="subtask-cell cell-desc">System 7 flag -- evaluator uprawnien</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.5</div>
                     <div class="subtask-cell cell-time">2h</div>
                     <div class="subtask-cell cell-desc">Flagi per-gildia (lider moze zmieniac)</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
-                  <div class="subtask-row" onclick="toggleSubtask(this)">
+                  <div class="subtask-row completed" onclick="toggleSubtask(this)">
                     <div class="subtask-cell cell-id">2.1.6</div>
                     <div class="subtask-cell cell-time">2h</div>
-                    <div class="subtask-cell cell-desc">Trusted Players -- lista zaufanych bez czlonkostwa</div>
-                    <div class="subtask-cell status-check">☐</div>
+                    <div class="subtask-cell cell-desc">TNT cooldown -- blokada build/destroy po wybuchu dla czlonkow</div>
+                    <div class="subtask-cell status-check">✓</div>
                   </div>
                 </div>
               </div>
@@ -2502,10 +2502,10 @@
             <h2>07 // CUBOIDY I WŁASNA OCHRONA</h2>
 <p>Wbudowany system ochrony oparty jest na cuboidach (obszarach cylindrycznych) wokół jaja gildii. Nie wymaga WorldGuard ani WorldEdit, co eliminuje konflikty priorytetów regionów i zmniejsza narzut wydajnościowy.</p>
             <ul>
-              <li><strong>3 strefy:</strong> spawn (10% promienia, tylko lider/co-lider), build (75%, członkowie + zaufani), PvP (100%, wszyscy mogą walczyć).</li>
-              <li><strong>7 flag:</strong> build, destroy, pvp, use, bucket, entry, interact – wartości ALLOW/DENY/MEMBERS/ALLIES/LEADER.</li>
-              <li><strong>Trusted Players:</strong> zaufani gracze spoza gildii z indywidualnymi uprawnieniami, domyślnie limit 10 per gildia.</li>
-              <li><strong>System levele:</strong> 10 poziomów cuboidu, zwiększających promień; wymagania: czas gildii, punkty, członkowie, itemy/waluta.</li>
+              <li><strong>6 flag:</strong> BUILD, DESTROY, USE, INTERACT, TNT, FRIENDLY_FIRE – wartości ALLOW/DENY/MEMBERS/ALLIES/LEADER.</li>
+              <li><strong>TNT:</strong> flaga TNT działa odwrotnie; wartość MEMBERS blokuje członków przed griefowaniem własnej gildii, pozwalając wrogom na rajdy.</li>
+              <li><strong>Cooldown po TNT:</strong> po wybuchu TNT w cuboidzie członkowie nie mogą budować/niszczyć przez <code>cuboid.tnt-build-cooldown-seconds</code> (domyślnie 60s).</li>
+              <li><strong>Friendly fire:</strong> flaga FRIENDLY_FIRE = DENY uniemożliwia PvP między członkami tej samej gildii na terenie cuboidu.</li>
             </ul>
           </div>
 

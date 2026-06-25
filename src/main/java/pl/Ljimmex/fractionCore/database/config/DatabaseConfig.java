@@ -30,11 +30,6 @@ public class DatabaseConfig {
         this.maxLifetime = maxLifetime;
     }
 
-    public static DatabaseConfig fromDefaults() {
-        return new DatabaseConfig(DatabaseType.SQLITE, "data/database.db", "localhost", 3306,
-                "fractioncore", "root", "", 10, 30000L, 600000L, 1800000L);
-    }
-
     public DatabaseType getType() {
         return type;
     }

@@ -17,9 +17,9 @@
 
 ---
 
-> ⚠️ **Development Preview v0.0.2**
+> ⚠️ **Development Preview v0.0.3**
 >
-> This release delivers Sprint 1 of Fraction Guild Clans v2.0. The **guild system** is fully playable: creation, ranks, member management, relations, chat tags, and disband. Cuboid protection, guild eggs, economy, ranking, GUI, and map rendering are scheduled for subsequent releases.
+> This release delivers Sprint 1 of Fraction Guild Clans v2.0. The **guild system** is fully playable: creation, ranks, member management, relations, chat tags, and disband. **Cuboid protection** (Task 2.1) is now available with configurable flags. Guild eggs, economy, ranking, GUI, and map rendering are scheduled for subsequent releases.
 
 ---
 
@@ -32,7 +32,7 @@ FractionCore is built around a module system where every major feature is an ind
 | Module | Purpose | Status |
 |--------|---------|--------|
 | `guild` | Guild creation, ranks, member management, relations, chat tags | ✅ Ready |
-| `cuboid` | Custom territory protection system | Infrastructure |
+| `cuboid` | Custom territory protection system with flags | ✅ Ready |
 | `egg` | Guild egg defense and destruction stages | Infrastructure |
 | `economy` | Built-in EcoCore economy | Infrastructure |
 | `ranking` | ELO-based guild and player ranking | Infrastructure |

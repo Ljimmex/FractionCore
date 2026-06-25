@@ -4,6 +4,16 @@ foundation:
   max-name-length: 32
   min-tag-length: 2
   max-tag-length: 6
+  # Starting cuboid radius (blocks from center)
+  starting-radius: 16
+  # Minimum distance between guild cuboid edges when creating a guild
+  min-distance-between-guilds: 5
+  # Y level where the guild egg cube is created
+  egg-center-y: 20
+  # Block placed in the center of the guild egg cube
+  egg-block: DRAGON_EGG
+  # Minimum distance from the world spawn when creating a guild
+  min-distance-from-spawn: 200
   # Whether to announce guild creation in global chat
   announce-globally: false
 
@@ -24,6 +34,11 @@ foundation-requirements:
   blocked-worlds:
     - "world_spawn"
     - "world_arena"
+
+# Cuboid protection settings
+cuboid:
+  # How long building and destroying is blocked after TNT explodes inside the cuboid (seconds). 0 = disabled.
+  tnt-build-cooldown-seconds: 60
 
 disband:
   # Time to confirm /guild disband confirm after /guild disband (seconds)

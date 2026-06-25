@@ -319,6 +319,17 @@ public class MigrationManager {
                     ")");
             statement.close();
         }));
+        migrations.add(new Migration(9, "Add guild cuboid flags table", connection -> {
+            Statement statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS guild_flags (" +
+                    "guild_id VARCHAR(36) NOT NULL, " +
+                    "flag_name VARCHAR(32) NOT NULL, " +
+                    "flag_value VARCHAR(16) NOT NULL, " +
+                    "PRIMARY KEY (guild_id, flag_name), " +
+                    "FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE" +
+                    ")");
+            statement.close();
+        }));
         return migrations;
     }
 }

@@ -1,215 +1,261 @@
 package pl.Ljimmex.fractionCore.config;
 
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.config.model.ConnectionSettings;
+import pl.Ljimmex.fractionCore.config.model.PluginConfig;
+import pl.Ljimmex.fractionCore.database.config.DatabaseConfig;
+import pl.Ljimmex.fractionCore.database.config.DatabaseType;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ConfigManager {
 
-    private static final int CURRENT_SCHEMA_VERSION = 2;
+    private static final String CONFIG_FILE = "config.yml";
+    private static final String MODULES_DIR = "modules";
+    private static final List<String> MODULE_CONFIG_FILES = List.of(
+            "guild.yml", "cuboid.yml", "egg.yml", "economy.yml", "ranking.yml",
+            "gui.yml", "tab.yml", "map.yml", "villagers.yml", "backup.yml", "webhook.yml"
+    );
 
     private final JavaPlugin plugin;
+    private final Logger logger;
     private final File modulesDirectory;
-    private final Map<String, FileConfiguration> moduleConfigs = new HashMap<>();
+    private final Map<String, ModuleConfig> moduleConfigs = new HashMap<>();
+
+    private YamlConfigurationLoader mainLoader;
+    private CommentedConfigurationNode mainNode;
+    private PluginConfig pluginConfig;
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.modulesDirectory = new File(plugin.getDataFolder(), "modules");
+        this.logger = plugin.getLogger();
+        this.modulesDirectory = new File(plugin.getDataFolder(), MODULES_DIR);
     }
 
     public void initialize() {
+        loadMainConfig();
+        validateMainConfig();
+
         if (!modulesDirectory.exists()) {
             modulesDirectory.mkdirs();
         }
 
-        plugin.saveDefaultConfig();
-        migrateMainConfig();
-
-        loadModuleConfig("guild.yml");
-        loadModuleConfig("cuboid.yml");
-        loadModuleConfig("egg.yml");
-        loadModuleConfig("economy.yml");
-        loadModuleConfig("ranking.yml");
-        loadModuleConfig("gui.yml");
-        loadModuleConfig("tab.yml");
-        loadModuleConfig("map.yml");
-        loadModuleConfig("villagers.yml");
-        loadModuleConfig("backup.yml");
-        loadModuleConfig("webhook.yml");
-    }
-
-    public void reload() {
-        plugin.reloadConfig();
-        migrateMainConfig();
-
-        for (String fileName : moduleConfigs.keySet()) {
+        for (String fileName : MODULE_CONFIG_FILES) {
             loadModuleConfig(fileName);
         }
     }
 
-    public FileConfiguration getModuleConfig(String moduleName) {
-        String fileName = moduleName.toLowerCase() + ".yml";
-        return moduleConfigs.computeIfAbsent(fileName, this::loadModuleConfig);
-    }
+    public void reload() {
+        loadMainConfig();
+        validateMainConfig();
 
-    private void migrateMainConfig() {
-        FileConfiguration config = plugin.getConfig();
-        int schemaVersion = config.getInt("general.version", 0);
-
-        if (schemaVersion < CURRENT_SCHEMA_VERSION) {
-            plugin.getLogger().info("Migrating config.yml from version " + schemaVersion + " to " + CURRENT_SCHEMA_VERSION);
-
-            setDefault(config, "general.version", CURRENT_SCHEMA_VERSION);
-            setDefault(config, "general.language", "pl_PL");
-            setDefault(config, "general.debug", false);
-            setDefault(config, "general.prefix", "<dark_gray>[<aqua>FGC<dark_gray>] <gray>");
-            setDefault(config, "general.custom-join-message.enabled", true);
-            setDefault(config, "general.custom-join-message.format", "<dark_gray>[<green><bold>+</bold></green>] <gray>{player}");
-            setDefault(config, "general.custom-quit-message.enabled", true);
-            setDefault(config, "general.custom-quit-message.format", "<dark_gray>[<red><bold>-</bold></red>] <gray>{player}");
-            setDefault(config, "lang.default", "pl_PL");
-
-            if (!config.contains("modules")) {
-                setDefault(config, "modules.guild.enabled", true);
-                setDefault(config, "modules.cuboid.enabled", true);
-                setDefault(config, "modules.egg.enabled", true);
-                setDefault(config, "modules.economy.enabled", true);
-                setDefault(config, "modules.ranking.enabled", true);
-                setDefault(config, "modules.gui.enabled", true);
-                setDefault(config, "modules.tab.enabled", true);
-                setDefault(config, "modules.map.enabled", true);
-                setDefault(config, "modules.villagers.enabled", false);
-                setDefault(config, "modules.lang.enabled", true);
-                setDefault(config, "modules.database.enabled", true);
-                setDefault(config, "modules.backup.enabled", true);
-                setDefault(config, "modules.webhook.enabled", false);
-            }
-
-            if (!config.contains("database")) {
-                setDefault(config, "database.type", "SQLITE");
-                setDefault(config, "database.sqlite.file", "data/database.db");
-                setDefault(config, "database.mysql.host", "localhost");
-                setDefault(config, "database.mysql.port", 3306);
-                setDefault(config, "database.mysql.database", "fractioncore");
-                setDefault(config, "database.mysql.username", "root");
-                setDefault(config, "database.mysql.password", "");
-                setDefault(config, "database.postgresql.host", "localhost");
-                setDefault(config, "database.postgresql.port", 5432);
-                setDefault(config, "database.postgresql.database", "fractioncore");
-                setDefault(config, "database.postgresql.username", "postgres");
-                setDefault(config, "database.postgresql.password", "");
-                setDefault(config, "database.pool.max-size", 10);
-                setDefault(config, "database.pool.connection-timeout", 30000);
-                setDefault(config, "database.pool.idle-timeout", 600000);
-                setDefault(config, "database.pool.max-lifetime", 1800000);
-            }
-
-            plugin.saveConfig();
-            plugin.getLogger().info("Config.yml migration completed.");
+        for (String fileName : MODULE_CONFIG_FILES) {
+            loadModuleConfig(fileName);
         }
     }
 
-    private void setDefault(FileConfiguration config, String path, Object value) {
-        if (!config.contains(path)) {
-            config.set(path, value);
+    public void saveMainConfig() {
+        try {
+            mainLoader.save(mainNode);
+        } catch (ConfigurateException e) {
+            logger.log(Level.SEVERE, "Failed to save main config", e);
         }
     }
 
-    private FileConfiguration loadModuleConfig(String fileName) {
+    public void setDebugEnabled(boolean enabled) {
+        pluginConfig.getGeneral().setDebug(enabled);
+        try {
+            mainNode.node("general", "debug").set(enabled);
+            mainLoader.save(mainNode);
+        } catch (ConfigurateException e) {
+            logger.log(Level.SEVERE, "Failed to save debug setting", e);
+        }
+    }
+
+    public PluginConfig getPluginConfig() {
+        return pluginConfig;
+    }
+
+    public DatabaseConfig getDatabaseConfig() {
+        var db = pluginConfig.getDatabase();
+        DatabaseType type;
+        try {
+            type = DatabaseType.valueOf(db.getType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.warning("Unknown database type '" + db.getType() + "', falling back to SQLITE.");
+            type = DatabaseType.SQLITE;
+        }
+
+        ConnectionSettings connection = type == DatabaseType.POSTGRESQL ? db.getPostgresql() : db.getMysql();
+        return new DatabaseConfig(
+                type,
+                db.getSqlite().getFile(),
+                connection.getHost(),
+                connection.getPort(),
+                connection.getDatabase(),
+                connection.getUsername(),
+                connection.getPassword(),
+                db.getPool().getMaxSize(),
+                db.getPool().getConnectionTimeout(),
+                db.getPool().getIdleTimeout(),
+                db.getPool().getMaxLifetime()
+        );
+    }
+
+    public ModuleConfig getModuleConfig(String moduleName) {
+        return moduleConfigs.get(moduleName.toLowerCase() + ".yml");
+    }
+
+    public File getModulesDirectory() {
+        return modulesDirectory;
+    }
+
+    private void loadMainConfig() {
+        File dataFolder = plugin.getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
+        }
+
+        File configFile = new File(dataFolder, CONFIG_FILE);
+        if (!configFile.exists()) {
+            plugin.saveResource(CONFIG_FILE, false);
+        }
+
+        mainLoader = newLoader(configFile.toPath());
+        try {
+            mainNode = mainLoader.load();
+            mergeDefaults(mainNode, newDefaultNode(PluginConfig.class, new PluginConfig()));
+            mainLoader.save(mainNode);
+            pluginConfig = mainNode.get(PluginConfig.class);
+        } catch (ConfigurateException e) {
+            logger.log(Level.SEVERE, "Failed to load main config, using defaults", e);
+            pluginConfig = new PluginConfig();
+        }
+    }
+
+    private void validateMainConfig() {
+        var db = pluginConfig.getDatabase();
+
+        validatePort("database.mysql.port", db.getMysql().getPort());
+        validatePort("database.postgresql.port", db.getPostgresql().getPort());
+
+        if (db.getPool().getMaxSize() <= 0) {
+            logger.warning("Invalid database.pool.max-size, must be positive");
+        }
+        if (db.getPool().getConnectionTimeout() < 0 || db.getPool().getIdleTimeout() < 0 || db.getPool().getMaxLifetime() < 0) {
+            logger.warning("Invalid database pool timeout values, must be non-negative");
+        }
+    }
+
+    private void validatePort(String path, int port) {
+        if (port <= 0 || port > 65535) {
+            logger.warning("Invalid port at " + path + ": " + port + ", using default");
+        }
+    }
+
+    private void loadModuleConfig(String fileName) {
         File file = new File(modulesDirectory, fileName);
         if (!file.exists()) {
             saveDefaultModuleConfig(fileName);
         }
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-        FileConfiguration defaults = mergeModuleDefaults(fileName, file, config);
-        if ("guild.yml".equals(fileName)) {
-            migrateGuildChatFormat(config, defaults, file);
-            migrateGuildRelationColors(config, defaults, file);
+        YamlConfigurationLoader loader = newLoader(file.toPath());
+        try {
+            CommentedConfigurationNode node = loader.load();
+            URL resource = plugin.getClass().getResource("/" + MODULES_DIR + "/" + fileName);
+            if (resource != null) {
+                CommentedConfigurationNode defaults = newLoader(resource).load();
+                migrateLegacyModuleValues(fileName, node, defaults);
+                node.mergeFrom(defaults);
+                loader.save(node);
+            }
+            moduleConfigs.put(fileName, new ModuleConfig(node, logger));
+        } catch (ConfigurateException e) {
+            logger.log(Level.SEVERE, "Failed to load module config " + fileName + ", using empty config", e);
+            moduleConfigs.put(fileName, new ModuleConfig(loader.createNode(), logger));
         }
-        moduleConfigs.put(fileName, config);
-        return config;
     }
 
     private void saveDefaultModuleConfig(String fileName) {
-        File file = new File(modulesDirectory, fileName);
-        try (InputStream inputStream = plugin.getResource("modules/" + fileName)) {
-            if (inputStream != null) {
-                Files.copy(inputStream, file.toPath());
-                plugin.getLogger().info("Saved default module config: " + fileName);
+        try (var in = plugin.getResource(MODULES_DIR + "/" + fileName)) {
+            if (in == null) {
+                logger.warning("Missing default module config resource: " + fileName);
+                return;
             }
+            File target = new File(modulesDirectory, fileName);
+            target.getParentFile().mkdirs();
+            Files.copy(in, target.toPath());
+            logger.info("Saved default module config: " + fileName);
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save default module config " + fileName, e);
+            logger.log(Level.SEVERE, "Failed to save default module config " + fileName, e);
         }
     }
 
-    private FileConfiguration mergeModuleDefaults(String fileName, File file, FileConfiguration config) {
-        FileConfiguration defaults = null;
-        try (InputStream inputStream = plugin.getResource("modules/" + fileName)) {
-            if (inputStream == null) {
-                return new YamlConfiguration();
-            }
-            defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            boolean changed = false;
-            for (String key : defaults.getKeys(true)) {
-                if (defaults.isConfigurationSection(key)) {
-                    continue;
-                }
-                if (!config.contains(key)) {
-                    config.set(key, defaults.get(key));
-                    changed = true;
-                }
-            }
-            if (changed) {
-                config.save(file);
-                plugin.getLogger().info("Updated module config with missing keys: " + fileName);
-            }
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to merge defaults for module config " + fileName, e);
+    private void migrateLegacyModuleValues(String fileName, CommentedConfigurationNode node, CommentedConfigurationNode defaults) {
+        if (!"guild.yml".equals(fileName)) {
+            return;
         }
-        return defaults != null ? defaults : new YamlConfiguration();
-    }
 
-    private void migrateGuildChatFormat(FileConfiguration config, FileConfiguration defaults, File file) {
-        String format = config.getString("chat.format", "");
-        if (format.contains("{rank}") || format.contains("<yellow>[{rank_letter}]</yellow>") || format.contains("</")) {
-            String newFormat = defaults.getString("chat.format",
-                    "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
-            config.set("chat.format", newFormat);
-            try {
-                config.save(file);
-                plugin.getLogger().info("Migrated guild chat format to the new version (removed {rank} placeholder / fixed closing tags).");
-            } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to migrate guild chat format", e);
+        try {
+            CommentedConfigurationNode chatFormatNode = node.node("chat", "format");
+            String format = chatFormatNode.getString("");
+            if (format.contains("{rank}") || format.contains("<yellow>[{rank_letter}]</yellow>") || format.contains("</")) {
+                String newFormat = defaults.node("chat", "format").getString(
+                        "<dark_gray>[{tag}]{rank_letter} <white>{player}<gray>: ");
+                chatFormatNode.set(newFormat);
+                logger.info("Migrated guild chat format to the new version.");
             }
+
+            CommentedConfigurationNode neutralNode = node.node("relation-colors", "neutral");
+            if ("<white>".equalsIgnoreCase(neutralNode.getString(""))) {
+                String newColor = defaults.node("relation-colors", "neutral").getString("<gray>");
+                neutralNode.set(newColor);
+                logger.info("Migrated neutral relation color from <white> to " + newColor + ".");
+            }
+        } catch (ConfigurateException e) {
+            logger.log(Level.WARNING, "Failed to migrate legacy guild config values", e);
         }
     }
 
-    private void migrateGuildRelationColors(FileConfiguration config, FileConfiguration defaults, File file) {
-        String neutral = config.getString("relation-colors.neutral", "");
-        if ("<white>".equalsIgnoreCase(neutral)) {
-            String newColor = defaults.getString("relation-colors.neutral", "<gray>");
-            config.set("relation-colors.neutral", newColor);
-            try {
-                config.save(file);
-                plugin.getLogger().info("Migrated neutral relation color from <white> to " + newColor + ".");
-            } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to migrate neutral relation color", e);
-            }
-        }
+    private static <T> CommentedConfigurationNode newDefaultNode(Class<T> clazz, T instance) throws ConfigurateException {
+        YamlConfigurationLoader loader = YamlConfigurationLoader.builder().build();
+        CommentedConfigurationNode node = loader.createNode();
+        node.set(clazz, instance);
+        return node;
     }
 
-    public File getModulesDirectory() {
-        return modulesDirectory;
+    private static void mergeDefaults(CommentedConfigurationNode node, CommentedConfigurationNode defaults) {
+        node.mergeFrom(defaults);
+    }
+
+    private static YamlConfigurationLoader newLoader(Path path) {
+        return YamlConfigurationLoader.builder()
+                .path(path)
+                .defaultOptions(opts -> opts
+                        .shouldCopyDefaults(true)
+                        .serializers(builder -> builder.registerAnnotatedObjects(ObjectMapper.factory())))
+                .build();
+    }
+
+    private static YamlConfigurationLoader newLoader(URL url) {
+        return YamlConfigurationLoader.builder()
+                .url(url)
+                .defaultOptions(opts -> opts
+                        .shouldCopyDefaults(true)
+                        .serializers(builder -> builder.registerAnnotatedObjects(ObjectMapper.factory())))
+                .build();
     }
 }

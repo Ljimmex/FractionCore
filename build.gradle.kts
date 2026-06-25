@@ -11,6 +11,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT")
 
+    implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("com.mysql:mysql-connector-j:9.1.0")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")

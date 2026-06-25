@@ -217,6 +217,17 @@ guild:
     no_allies: "<gray>No allies."
     no_enemies: "<gray>No enemies."
     error_generic: "<red>An error occurred while fetching relations.</red>"
+  cuboid:
+    protection:
+      denied: "<red>You don't have permission for this action in this territory."
+      tnt_cooldown: "<red>Building and destroying is blocked after a TNT explosion. Remaining: <yellow>{seconds}</yellow> seconds."
+    flag:
+      success: "<green>Set cuboid flag <yellow>{flag}</yellow> to <yellow>{value}</yellow>."
+      error_no_permission: "<red>Only the leader or co-leader can manage cuboid flags."
+      error_invalid: "<red>Invalid flag or value. Available flags: BUILD, DESTROY, USE, TNT, INTERACT, FRIENDLY_FIRE. Values: ALLOW, DENY, MEMBERS, ALLIES, LEADER."
+      error_no_cuboid: "<red>Your guild does not have a cuboid."
+      error_generic: "<red>An error occurred while changing the cuboid flag."
+  player_not_found: "<red>Player <yellow>{target}</yellow> not found."
   not_found: "<red>Guild not found.</red>"
   no_guild: "<red>You do not belong to any guild.</red>"
   not_member: "<red>Player {player} is not a member of your guild.</red>"

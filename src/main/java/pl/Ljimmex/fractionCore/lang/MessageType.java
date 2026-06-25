@@ -4,5 +4,6 @@ public enum MessageType {
     INFO,
     ERROR,
     SUCCESS,
-    WARNING
+    WARNING,
+    RAW
 }

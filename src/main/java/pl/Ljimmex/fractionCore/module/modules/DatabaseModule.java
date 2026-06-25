@@ -1,6 +1,7 @@
 package pl.Ljimmex.fractionCore.module.modules;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.FractionCore;
 import pl.Ljimmex.fractionCore.database.DatabaseManager;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDaoImpl;
@@ -21,6 +22,8 @@ import pl.Ljimmex.fractionCore.database.dao.GuildDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildFlagDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildFlagDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.GuildEggLogDaoImpl;
 import pl.Ljimmex.fractionCore.database.dao.PlayerDao;
 import pl.Ljimmex.fractionCore.database.dao.PlayerDaoImpl;
@@ -41,6 +44,7 @@ public class DatabaseModule extends BaseModule {
     private GuildJoinRequestDao guildJoinRequestDao;
     private GuildRelationDao guildRelationDao;
     private GuildAllyRequestDao guildAllyRequestDao;
+    private GuildFlagDao guildFlagDao;
     private GuildActivityLogDao guildActivityLogDao;
     private GuildEggLogDao guildEggLogDao;
     private GuildDisbandHistoryDao guildDisbandHistoryDao;
@@ -58,7 +62,7 @@ public class DatabaseModule extends BaseModule {
     @Override
     public void onEnable() {
         databaseManager = new DatabaseManager(getPlugin());
-        databaseManager.loadConfiguration(getPlugin().getConfig());
+        databaseManager.loadConfiguration(((FractionCore) getPlugin()).getConfigManager().getDatabaseConfig());
         try {
             databaseManager.connect();
             playerDao = new PlayerDaoImpl(databaseManager);
@@ -69,6 +73,7 @@ public class DatabaseModule extends BaseModule {
             guildJoinRequestDao = new GuildJoinRequestDaoImpl(databaseManager);
             guildRelationDao = new GuildRelationDaoImpl(databaseManager);
             guildAllyRequestDao = new GuildAllyRequestDaoImpl(databaseManager);
+            guildFlagDao = new GuildFlagDaoImpl(databaseManager);
             guildActivityLogDao = new GuildActivityLogDaoImpl(databaseManager);
             guildEggLogDao = new GuildEggLogDaoImpl(databaseManager);
             guildDisbandHistoryDao = new GuildDisbandHistoryDaoImpl(databaseManager);
@@ -120,6 +125,10 @@ public class DatabaseModule extends BaseModule {
 
     public GuildAllyRequestDao getGuildAllyRequestDao() {
         return guildAllyRequestDao;
+    }
+
+    public GuildFlagDao getGuildFlagDao() {
+        return guildFlagDao;
     }
 
     public GuildActivityLogDao getGuildActivityLogDao() {

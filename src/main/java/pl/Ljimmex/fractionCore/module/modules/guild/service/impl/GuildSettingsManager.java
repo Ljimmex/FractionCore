@@ -286,27 +286,27 @@ public class GuildSettingsManager {
                     .with("level", guild.getLevel())
                     .with("members", members.size())
                     .with("date", context.formatDate(guild.getCreatedAt()));
-            context.send(player, "guild.info.header", MessageType.INFO, ctx);
-            context.send(player, "guild.info.leader", MessageType.INFO, ctx);
+            context.send(player, "guild.info.header", MessageType.RAW, ctx);
+            context.send(player, "guild.info.leader", MessageType.RAW, ctx);
             if (guild.getDescription() != null && !guild.getDescription().isBlank()) {
-                context.send(player, "guild.info.description", MessageType.INFO, ctx.with("description", guild.getDescription()));
+                context.send(player, "guild.info.description", MessageType.RAW, ctx.with("description", guild.getDescription()));
             }
             if (isMember || guild.isShowHome()) {
                 String homeWorld = guild.getHomeWorld() != null ? guild.getHomeWorld() : context.langManager.getRawMessage("placeholders.not_available");
-                context.send(player, "guild.info.home", MessageType.INFO,
+                context.send(player, "guild.info.home", MessageType.RAW,
                         ctx.with("home_world", homeWorld)
                                 .with("home_x", String.format("%.1f", guild.getHomeX()))
                                 .with("home_y", String.format("%.1f", guild.getHomeY()))
                                 .with("home_z", String.format("%.1f", guild.getHomeZ())));
             }
-            context.send(player, "guild.info.points", MessageType.INFO, ctx);
-            context.send(player, "guild.info.level", MessageType.INFO, ctx);
-            context.send(player, "guild.info.members", MessageType.INFO, ctx);
-            context.send(player, "guild.info.flags", MessageType.INFO,
+            context.send(player, "guild.info.points", MessageType.RAW, ctx);
+            context.send(player, "guild.info.level", MessageType.RAW, ctx);
+            context.send(player, "guild.info.members", MessageType.RAW, ctx);
+            context.send(player, "guild.info.flags", MessageType.RAW,
                     ctx.with("is_public", guild.isPublic() ? "tak" : "nie")
                             .with("allow_join_requests", guild.isAllowJoinRequests() ? "tak" : "nie")
                             .with("show_home", guild.isShowHome() ? "tak" : "nie"));
-            context.send(player, "guild.info.created", MessageType.INFO, ctx);
+            context.send(player, "guild.info.created", MessageType.RAW, ctx);
             return true;
         } catch (SQLException e) {
             context.plugin.getLogger().severe("Failed to show guild info: " + e.getMessage());

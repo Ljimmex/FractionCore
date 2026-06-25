@@ -3,9 +3,8 @@ package pl.Ljimmex.fractionCore.module.modules.guild.listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import pl.Ljimmex.fractionCore.config.ModuleConfig;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,10 +25,10 @@ public class GuildChatListener implements Listener {
     private final JavaPlugin plugin;
     private final PlayerDao playerDao;
     private final GuildDao guildDao;
-    private final FileConfiguration guildConfig;
+    private final ModuleConfig guildConfig;
     private final GuildRelationManager relationManager;
 
-    public GuildChatListener(JavaPlugin plugin, PlayerDao playerDao, GuildDao guildDao, FileConfiguration guildConfig,
+    public GuildChatListener(JavaPlugin plugin, PlayerDao playerDao, GuildDao guildDao, ModuleConfig guildConfig,
                              GuildRelationManager relationManager) {
         this.plugin = plugin;
         this.playerDao = playerDao;

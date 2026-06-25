@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.command.GuildCommand;
 import pl.Ljimmex.fractionCore.config.ConfigManager;
@@ -13,6 +12,7 @@ import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildFlagDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDao;
@@ -36,7 +36,8 @@ import pl.Ljimmex.fractionCore.module.modules.WebhookModule;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.GuildService;
 import pl.Ljimmex.fractionCore.module.modules.BackupModule;
 
-import java.util.Objects;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+
 
 public final class FractionCore extends JavaPlugin {
 
@@ -49,14 +50,13 @@ public final class FractionCore extends JavaPlugin {
         configManager = new ConfigManager(this);
         configManager.initialize();
 
-        debugManager = new DebugManager(this);
-        debugManager.loadConfiguration(getConfig());
+        debugManager = new DebugManager(this, configManager);
+        debugManager.loadConfiguration(configManager.getPluginConfig());
 
         moduleManager = new ModuleManager(this);
         registerModules();
 
-        FileConfiguration config = getConfig();
-        moduleManager.loadConfiguration(config);
+        moduleManager.loadConfiguration(configManager.getPluginConfig());
         moduleManager.enableModules();
 
         GuildService guildService = createGuildService();
@@ -65,13 +65,18 @@ public final class FractionCore extends JavaPlugin {
             guildModule.setGuildService(guildService);
         }
 
+        CuboidModule cuboidModule = (CuboidModule) moduleManager.getModule("cuboid");
+        if (cuboidModule != null) {
+            cuboidModule.registerProtectionListener(guildService);
+        }
+
         LangManager langManager = ((LangModule) moduleManager.getModule("lang")).getLangManager();
         GuildCommand guildCommand = new GuildCommand(this, moduleManager, guildService, langManager);
-        org.bukkit.command.PluginCommand guildPluginCommand = Objects.requireNonNull(getCommand("guild"));
-        guildPluginCommand.setExecutor(guildCommand);
-        guildPluginCommand.setTabCompleter(guildCommand);
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+            guildCommand.register(event.registrar());
+        });
 
-        getServer().getPluginManager().registerEvents(new PlayerConnectionListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerConnectionListener(configManager), this);
 
         printStartupBanner();
         getLogger().info("FractionCore enabled successfully.");
@@ -132,8 +137,10 @@ public final class FractionCore extends JavaPlugin {
         GuildRelationDao guildRelationDao = databaseModule.getGuildRelationDao();
         GuildAllyRequestDao guildAllyRequestDao = databaseModule.getGuildAllyRequestDao();
         GuildDisbandHistoryDao guildDisbandHistoryDao = databaseModule.getGuildDisbandHistoryDao();
+        GuildFlagDao guildFlagDao = databaseModule.getGuildFlagDao();
         return new GuildService(this, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, guildJoinRequestDao,
-                guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, configManager.getModuleConfig("guild"), langManager);
+                guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, guildFlagDao,
+                configManager.getModuleConfig("guild"), langManager);
     }
 
     private void printStartupBanner() {

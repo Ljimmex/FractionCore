@@ -217,6 +217,17 @@ guild:
     no_allies: "<gray>Brak sojusznikow."
     no_enemies: "<gray>Brak wrogow."
     error_generic: "<red>Wystapil blad podczas pobierania relacji.</red>"
+  cuboid:
+    protection:
+      denied: "<red>Nie masz uprawnien do tej akcji na tym terenie."
+      tnt_cooldown: "<red>Budowanie i niszczenie jest zablokowane po wybuchu TNT. Pozostalo <yellow>{seconds}</yellow> sekund."
+    flag:
+      success: "<green>Ustawiono flage <yellow>{flag}</yellow> na <yellow>{value}</yellow>."
+      error_no_permission: "<red>Tylko lider lub co-lider moze zarzadzac flagami cuboidu."
+      error_invalid: "<red>Nieprawidlowa flaga lub wartosc. Dostepne flagi: BUILD, DESTROY, USE, TNT, INTERACT, FRIENDLY_FIRE. Wartosci: ALLOW, DENY, MEMBERS, ALLIES, LEADER."
+      error_no_cuboid: "<red>Twoja gildia nie posiada cuboidu."
+      error_generic: "<red>Wystapil blad podczas zmiany flagi cuboidu."
+  player_not_found: "<red>Nie znaleziono gracza <yellow>{target}</yellow>."
   not_found: "<red>Nie znaleziono gildii.</red>"
   no_guild: "<red>Nie nalezysz do zadnej gildii.</red>"
   not_member: "<red>Gracz {player} nie jest czlonkiem twojej gildii.</red>"

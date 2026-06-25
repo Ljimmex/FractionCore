@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.config.model.PluginConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +30,8 @@ public class LangManager {
         this.defaultLanguage = "pl_PL";
     }
 
-    public void loadConfiguration(FileConfiguration config) {
-        this.defaultLanguage = config.getString("lang.default", "pl_PL");
+    public void loadConfiguration(PluginConfig config) {
+        this.defaultLanguage = config.getLang().getDefaultLanguage();
     }
 
     public void loadLanguages() {
@@ -150,6 +151,9 @@ public class LangManager {
     }
 
     private String applyPrefix(String message, MessageType type, String languageCode) {
+        if (type == MessageType.RAW) {
+            return message;
+        }
         String prefixKey = "prefix." + type.name().toLowerCase();
         String prefix = getRawMessage(prefixKey, languageCode, true);
         if (prefix != null && !prefix.isEmpty()) {

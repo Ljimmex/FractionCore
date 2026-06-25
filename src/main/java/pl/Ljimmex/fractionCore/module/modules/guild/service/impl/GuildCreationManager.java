@@ -215,16 +215,7 @@ public class GuildCreationManager {
             }
 
             int startingRadius = context.guildConfig.getInt("foundation.starting-radius", 16);
-            CuboidData cuboid = new CuboidData(
-                    guildId,
-                    world.getName(),
-                    center.getBlockX(),
-                    center.getBlockY(),
-                    center.getBlockZ(),
-                    startingRadius,
-                    1
-            );
-            context.cuboidDao.save(cuboid);
+            context.cuboidManager.createDefaultCuboid(guildId, world, center, startingRadius);
 
             createEggCube(center);
             founder.teleport(home);

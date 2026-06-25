@@ -6,8 +6,8 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import java.util.Set;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import pl.Ljimmex.fractionCore.config.ModuleConfig;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
@@ -31,11 +31,11 @@ public class GuildTagManager {
 
     private final PlayerDao playerDao;
     private final GuildDao guildDao;
-    private final FileConfiguration guildConfig;
+    private final ModuleConfig guildConfig;
     private final GuildRelationManager relationManager;
     private final Map<UUID, Scoreboard> scoreboards = new HashMap<>();
 
-    public GuildTagManager(PlayerDao playerDao, GuildDao guildDao, FileConfiguration guildConfig,
+    public GuildTagManager(PlayerDao playerDao, GuildDao guildDao, ModuleConfig guildConfig,
                            GuildRelationManager relationManager) {
         this.playerDao = playerDao;
         this.guildDao = guildDao;

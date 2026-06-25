@@ -6,6 +6,27 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 
 ---
 
+## [0.0.3] - 2026-06-21
+
+### Added
+
+#### Task 2.1 — Cuboid Architecture
+- Added `CuboidFlagType`, `CuboidFlagValue`, and `CuboidAction` enums under `pl.Ljimmex.fractionCore.cuboid.model`.
+- Added `GuildFlag` entity plus `GuildFlagDao` implementation.
+- Added database migration v9 creating the `guild_flags` table.
+- Added `CuboidManager` loading all cuboids into memory and resolving cuboids by location or guild.
+- Implemented 6 cuboid flags (`BUILD`, `DESTROY`, `USE`, `INTERACT`, `TNT`, `FRIENDLY_FIRE`) with 5 values each (`ALLOW`, `DENY`, `MEMBERS`, `ALLIES`, `LEADER`).
+- Added `CuboidProtectionListener` handling `BlockPlace`, `BlockBreak`, `PlayerInteract`, TNT explosions, and PvP.
+- Added configurable TNT build cooldown (`cuboid.tnt-build-cooldown-seconds`, default 60s): after TNT explodes inside a cuboid, building and destroying are blocked for guild members.
+- Removed the `BUCKET` and `ENTRY` cuboid flags.
+- Added `/guild cuboidflag` command.
+- Added language keys for cuboid protection and flags in `pl_PL.yml` and `en_US.yml`.
+- Rebuilt `/guild help` with `main`, `guild`, and `admin` categories.
+- Added missing foundation config keys to `modules/guild.yml`: `starting-radius`, `min-distance-between-guilds`, `egg-center-y`, `egg-block`, `min-distance-from-spawn`.
+
+### Removed
+- Removed the trusted-player system (`GuildTrustedPlayer`, `GuildTrustedDao`, `/guild trust`, `/guild untrust`, `/guild trusted`) in favor of explicit guild membership and ally relations.
+
 ## [0.0.2] - 2026-06-18
 
 ### Added

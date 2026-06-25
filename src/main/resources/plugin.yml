@@ -38,6 +38,7 @@ permissions:
       guild.user.enemy: true
       guild.user.neutral: true
       guild.user.relations: true
+      guild.user.cuboidflag: true
   guild.user.invite:
     description: Allows inviting players to the guild
     default: true
@@ -107,6 +108,9 @@ permissions:
   guild.user.relations:
     description: Allows viewing guild relations
     default: true
+  guild.user.cuboidflag:
+    description: Allows managing cuboid flags
+    default: true
   fractioncore.admin:
     description: Allows access to admin commands
     default: op
@@ -123,9 +127,3 @@ permissions:
     description: Allows toggling debug mode
     default: op
 
-commands:
-  guild:
-    description: Main FractionCore command
-    usage: /guild [args]
-    permission: fractioncore.command.guild
-    permission-message: You do not have permission to use this command.

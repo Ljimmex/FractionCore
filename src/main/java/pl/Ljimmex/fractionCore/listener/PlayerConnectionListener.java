@@ -1,42 +1,40 @@
 package pl.Ljimmex.fractionCore.listener;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.config.ConfigManager;
+import pl.Ljimmex.fractionCore.config.model.PluginConfig;
 import pl.Ljimmex.fractionCore.lang.MessageParser;
 
 public class PlayerConnectionListener implements Listener {
 
-    private final JavaPlugin plugin;
+    private final ConfigManager configManager;
 
-    public PlayerConnectionListener(JavaPlugin plugin) {
-        this.plugin = plugin;
+    public PlayerConnectionListener(ConfigManager configManager) {
+        this.configManager = configManager;
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("general.custom-join-message.enabled", true)) {
+        PluginConfig config = configManager.getPluginConfig();
+        if (!config.getGeneral().getCustomJoinMessage().isEnabled()) {
             return;
         }
-        String format = config.getString("general.custom-join-message.format",
-                "<dark_gray>[<green><bold>+</bold></green>] <gray>{player}");
+        String format = config.getGeneral().getCustomJoinMessage().getFormat();
         event.joinMessage(formatMessage(format, event.getPlayer()));
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("general.custom-quit-message.enabled", true)) {
+        PluginConfig config = configManager.getPluginConfig();
+        if (!config.getGeneral().getCustomQuitMessage().isEnabled()) {
             return;
         }
-        String format = config.getString("general.custom-quit-message.format",
-                "<dark_gray>[<red><bold>-</bold></red>] <gray>{player}");
+        String format = config.getGeneral().getCustomQuitMessage().getFormat();
         event.quitMessage(formatMessage(format, event.getPlayer()));
     }
 

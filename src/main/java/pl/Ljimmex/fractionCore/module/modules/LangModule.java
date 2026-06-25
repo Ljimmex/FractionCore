@@ -1,6 +1,7 @@
 package pl.Ljimmex.fractionCore.module.modules;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.Ljimmex.fractionCore.FractionCore;
 import pl.Ljimmex.fractionCore.lang.LangManager;
 import pl.Ljimmex.fractionCore.module.BaseModule;
 
@@ -20,7 +21,7 @@ public class LangModule extends BaseModule {
     @Override
     public void onEnable() {
         langManager = new LangManager(getPlugin());
-        langManager.loadConfiguration(getPlugin().getConfig());
+        langManager.loadConfiguration(((FractionCore) getPlugin()).getConfigManager().getPluginConfig());
         langManager.loadLanguages();
         getPlugin().getLogger().info("Lang module enabled. Loaded languages: " + langManager.getLoadedLanguages());
     }
@@ -33,6 +34,7 @@ public class LangModule extends BaseModule {
     @Override
     public void onReload() {
         if (langManager != null) {
+            langManager.loadConfiguration(((FractionCore) getPlugin()).getConfigManager().getPluginConfig());
             langManager.reload();
         }
     }

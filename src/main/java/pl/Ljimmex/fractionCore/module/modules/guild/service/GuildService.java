@@ -1,19 +1,21 @@
 package pl.Ljimmex.fractionCore.module.modules.guild.service;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import pl.Ljimmex.fractionCore.config.ModuleConfig;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.Ljimmex.fractionCore.database.dao.CuboidDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildAllyRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildBanDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildDisbandHistoryDao;
+import pl.Ljimmex.fractionCore.database.dao.GuildFlagDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildInviteDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildJoinRequestDao;
 import pl.Ljimmex.fractionCore.database.dao.GuildRelationDao;
 import pl.Ljimmex.fractionCore.database.dao.PlayerDao;
 import pl.Ljimmex.fractionCore.lang.LangManager;
+import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.CuboidManager;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.GuildContext;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.GuildCreationManager;
 import pl.Ljimmex.fractionCore.module.modules.guild.service.impl.GuildDisbandManager;
@@ -35,9 +37,10 @@ public class GuildService {
                         GuildBanDao guildBanDao, GuildInviteDao guildInviteDao, GuildJoinRequestDao guildJoinRequestDao,
                         GuildRelationDao guildRelationDao, GuildAllyRequestDao guildAllyRequestDao,
                         GuildDisbandHistoryDao guildDisbandHistoryDao,
-                        FileConfiguration guildConfig, LangManager langManager) {
+                        GuildFlagDao guildFlagDao,
+                        ModuleConfig guildConfig, LangManager langManager) {
         this.context = new GuildContext(plugin, guildDao, playerDao, cuboidDao, guildBanDao, guildInviteDao, guildJoinRequestDao,
-                guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, guildConfig, langManager);
+                guildRelationDao, guildAllyRequestDao, guildDisbandHistoryDao, guildFlagDao, guildConfig, langManager);
         this.creationManager = new GuildCreationManager(context);
         this.memberManager = new GuildMemberManager(context);
         this.rankManager = new GuildRankManager(context);
@@ -53,6 +56,10 @@ public class GuildService {
         return context.getRelationManager();
     }
 
+    public CuboidManager getCuboidManager() {
+        return context.getCuboidManager();
+    }
+
     public PlayerDao getPlayerDao() {
         return context.getPlayerDao();
     }
@@ -61,8 +68,12 @@ public class GuildService {
         return context.getGuildDao();
     }
 
-    public FileConfiguration getGuildConfig() {
+    public ModuleConfig getGuildConfig() {
         return context.getGuildConfig();
+    }
+
+    public LangManager getLangManager() {
+        return context.getLangManager();
     }
 
     // ============================================================
@@ -216,4 +227,17 @@ public class GuildService {
     public boolean sendRelationsList(Player player) {
         return context.getRelationManager().sendRelationsList(player);
     }
+
+    // ============================================================
+    // Cuboid management
+    // ============================================================
+
+    public boolean setCuboidFlag(Player player, String flagName, String valueName) {
+        return context.getCuboidManager().setCuboidFlag(player, flagName, valueName);
+    }
+
+    public boolean sendCuboidFlagList(Player player) {
+        return context.getCuboidManager().sendCuboidFlagList(player);
+    }
+
 }
